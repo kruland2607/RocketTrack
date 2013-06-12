@@ -27,6 +27,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class RocketTrackBluetooth implements Runnable {
@@ -69,7 +70,7 @@ public class RocketTrackBluetooth implements Runnable {
 
 		for (;;) {
 			c = getchar();
-			Log.d(TAG, "Read char = " + c);
+//			Log.d(TAG, "Read char = " + c);
 			if (Thread.interrupted()) {
 				Log.d(TAG,"INTERRUPTED\n");
 				break;
@@ -87,6 +88,10 @@ public class RocketTrackBluetooth implements Runnable {
 			synchronized(this) {
 				if (c == '\n') {
 					if (line_count != 0) {
+						String string = new String(line_bytes, 0, line_count);
+						Log.d(TAG,"Line = " + string);
+						Message.obtain(handler, RocketLocationService.MSG_TELEMETRY, string).sendToTarget();
+						// Here we do something with the string.
 						//							add_bytes(line_bytes, line_count);
 						line_count = 0;
 					}
@@ -136,6 +141,7 @@ public class RocketTrackBluetooth implements Runnable {
 					input = socket.getInputStream();
 					output = socket.getOutputStream();
 				} catch (IOException e) {
+					Log.e(TAG,"Exception connecting", e);
 					// Close the socket
 					try {
 						socket.close();

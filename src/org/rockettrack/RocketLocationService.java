@@ -4,7 +4,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeoutException;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -24,7 +23,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
-public class RocketLocationService extends Service implements LocationListener{
+public class RocketLocationService extends Service implements LocationListener {
 	
 	private final static String TAG = "RocketLocationService";
 
@@ -57,8 +56,6 @@ public class RocketLocationService extends Service implements LocationListener{
 	// Name of the connected device
 	private BluetoothDevice device           = null;
 	private RocketTrackBluetooth  mAltosBluetooth  = null;
-	private TelemetryReader mTelemetryReader = null;
-//	private TelemetryLogger mTelemetryLogger = null;
 	
 	// Unique Identification Number for the Notification.
 	// We use it on Notification start, and to cancel it.
@@ -160,22 +157,6 @@ public class RocketLocationService extends Service implements LocationListener{
 	private void stopAltosBluetooth() {
 		Log.d(TAG, "stopAltosBluetooth(): begin");
 		setState(STATE_READY);
-		if (mTelemetryReader != null) {
-			Log.d(TAG, "stopAltosBluetooth(): stopping TelemetryReader");
-			mTelemetryReader.interrupt();
-			try {
-				mTelemetryReader.join();
-			} catch (InterruptedException e) {
-			}
-			mTelemetryReader = null;
-		}
-		/*
-		if (mTelemetryLogger != null) {
-			Log.d(TAG, "stopAltosBluetooth(): stopping TelemetryLogger");
-			mTelemetryLogger.stop();
-			mTelemetryLogger = null;
-		}
-		*/
 		if (mAltosBluetooth != null) {
 			Log.d(TAG, "stopAltosBluetooth(): stopping AltosBluetooth");
 			mAltosBluetooth.close();
@@ -194,17 +175,11 @@ public class RocketLocationService extends Service implements LocationListener{
 
 		setState(STATE_CONNECTED);
 
-		mTelemetryReader = new TelemetryReader(mAltosBluetooth, mHandler);
-		mTelemetryReader.start();
-		
 //		mTelemetryLogger = new TelemetryLogger(this, mAltosBluetooth);
 	}
 
 	private void onTimerTick() {
 		Log.d(TAG, "Timer wakeup");
-		if ( mAltosBluetooth != null ) {
-			mAltosBluetooth.print("$PMTK000*32\r\n");
-		}
 		try {
 			if (mClients.size() <= 0 && state != STATE_CONNECTED) {
 				stopSelf();

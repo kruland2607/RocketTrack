@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">RocketTrack</string>
-    <string name="dummy_button">Dummy Button</string>
+    <string name="stop">Stop Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="bt_not_enabled">Bluetooth was not enabled.</string>
 
@@ -19,7 +19,7 @@
     <string name="connect_device">Connect a device</string>
 
     <!-- Service -->
-    <string name="telemetry_service_label">AltosDroid Telemetry Service</string>
+    <string name="telemetry_service_label">RocketTrack Telemetry Service</string>
     <string name="telemetry_service_started">Telemetry Service Started</string>
     <string name="telemetry_service_stopped">Telemetry Service Stopped</string>
 

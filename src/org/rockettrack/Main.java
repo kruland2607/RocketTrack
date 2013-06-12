@@ -19,12 +19,15 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.Toast;
 
 /**
@@ -33,7 +36,7 @@ import android.widget.Toast;
  * 
  * @see SystemUiHider
  */
-public class Main extends Activity {
+public class Main extends FragmentActivity {
 	private final static String TAG = "RocketTrack.Main";
 	
 	// Message types received by our Handler
@@ -55,6 +58,8 @@ public class Main extends Activity {
 	private static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT      = 2;
 
+	private ConsoleOutputView output;
+	
 	/**
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -164,8 +169,18 @@ public class Main extends Activity {
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
-		findViewById(R.id.dummy_button).setOnTouchListener(
-				mDelayHideTouchListener);
+		findViewById(R.id.stop_button).setOnTouchListener(mDelayHideTouchListener);
+		((Button) findViewById(R.id.stop_button)).setOnClickListener( new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				Main.this.onDoStop();
+				
+			}
+			
+		});
+		
+		output = ((ConsoleOutputView) findViewById(R.id.fullscreen_content));
 	}
 
 	@Override
@@ -247,6 +262,13 @@ public class Main extends Activity {
 			break;
 		}
 	}
+	
+	public void onDoStop() {
+		try {
+			mService.send(Message.obtain(null,RocketLocationService.MSG_DISCONNECTED,null));
+		} catch ( RemoteException e ) {
+		}
+	}
 
 	private void connectDevice(Intent data) {
 		// Get the device MAC address
@@ -311,6 +333,11 @@ public class Main extends Activity {
 		public void handleMessage(Message msg) {
 			Main ad = mAltosDroid.get();
 			switch (msg.what) {
+			case MSG_TELEMETRY:
+				String value = (String) msg.obj;
+				mAltosDroid.get().output.addLine(value);
+				mAltosDroid.get().output.invalidate();
+				break;
 			/*
 			case MSG_STATE_CHANGE:
 				if(D) Log.d(TAG, "MSG_STATE_CHANGE: " + msg.arg1);
