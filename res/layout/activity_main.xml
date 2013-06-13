@@ -15,10 +15,9 @@
         android:id="@+id/fullscreen_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
         android:keepScreenOn="true"
         android:textColor="#33b5e5"
-        android:textSize="50sp"
+        android:textSize="9sp"
         android:textStyle="bold" />
 
     <!--
