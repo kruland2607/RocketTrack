@@ -6,7 +6,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Paint.FontMetrics;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -42,13 +41,25 @@ public class ConsoleOutputView extends ImageView {
 	protected void onDraw(Canvas canvas) {
 
 		Paint textPaint = lineView.getPaint();
-		int baseline = Math.round(textPaint.getFontSpacing());
+		int baseline = computeBaseLine();
 		
-		int y=0;
+		int y= -1* Math.round( textPaint.getFontMetrics().top ) ;
 		for( String s : lines.toArray( new String[0])) {
 			canvas.drawText(s,0,y,textPaint);
 			y+=baseline;
 		}
 	}
 
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		int numberOfLines = h / computeBaseLine() - 1;
+		lines = new ArrayBlockingQueue<String>(numberOfLines);
+	}
+
+	private int computeBaseLine() {
+		Paint textPaint = lineView.getPaint();
+		int baseline = Math.round(textPaint.getFontSpacing());
+		return baseline;
+	}
 }
