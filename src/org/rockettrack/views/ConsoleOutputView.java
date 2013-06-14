@@ -1,7 +1,8 @@
-package org.rockettrack;
+package org.rockettrack.views;
 
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import org.rockettrack.RocketTrackState;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -11,8 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class ConsoleOutputView extends ImageView {
-
-	private Queue<String> lines = new ArrayBlockingQueue<String>(100);
 
 	private TextView lineView;
 	
@@ -29,22 +28,15 @@ public class ConsoleOutputView extends ImageView {
 		this(context,null);
 	}
 
-	public void addLine(String s ) {
-		if ( lines.offer(s)  == true ) {
-			return;
-		}
-		lines.poll();
-		lines.add(s);
-	}
-
 	@Override
 	protected void onDraw(Canvas canvas) {
 
 		Paint textPaint = lineView.getPaint();
 		int baseline = computeBaseLine();
 		
+		String[] lines = RocketTrackState.getInstance().getLines();
 		int y= -1* Math.round( textPaint.getFontMetrics().top ) ;
-		for( String s : lines.toArray( new String[0])) {
+		for( String s : lines) {
 			canvas.drawText(s,0,y,textPaint);
 			y+=baseline;
 		}
@@ -54,7 +46,7 @@ public class ConsoleOutputView extends ImageView {
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
 		int numberOfLines = h / computeBaseLine() - 1;
-		lines = new ArrayBlockingQueue<String>(numberOfLines);
+		RocketTrackState.getInstance().resizeLines(numberOfLines);
 	}
 
 	private int computeBaseLine() {

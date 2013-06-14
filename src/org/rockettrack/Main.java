@@ -2,7 +2,10 @@ package org.rockettrack;
 
 import java.lang.ref.WeakReference;
 
+import net.sf.marineapi.nmea.sentence.PositionSentence;
+
 import org.rockettrack.util.SystemUiHider;
+import org.rockettrack.views.ConsoleOutputView;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -20,6 +23,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -42,9 +46,7 @@ public class Main extends FragmentActivity {
 	// Message types received by our Handler
 	public static final int MSG_STATE_CHANGE    = 1;
 	public static final int MSG_TELEMETRY       = 2;
-	public static final int MSG_UPDATE_AGE      = 3;
 	public static final int MSG_LOCATION	    = 4;
-	public static final int MSG_CRC_ERROR	    = 5;
 
 	// Local Bluetooth adapter
 	private BluetoothAdapter mBluetoothAdapter = null;
@@ -326,52 +328,47 @@ public class Main extends FragmentActivity {
 
 	// The Handler that gets information back from the Telemetry Service
 	static class IncomingHandler extends Handler {
-		private final WeakReference<Main> mAltosDroid;
-		IncomingHandler(Main ad) { mAltosDroid = new WeakReference<Main>(ad); }
+		private final WeakReference<Main> main;
+		IncomingHandler(Main ad) { main = new WeakReference<Main>(ad); }
 
 		@Override
 		public void handleMessage(Message msg) {
-			Main ad = mAltosDroid.get();
+			Main ad = main.get();
 			switch (msg.what) {
 			case MSG_TELEMETRY:
-				String value = (String) msg.obj;
-				mAltosDroid.get().output.addLine(value);
-				mAltosDroid.get().output.invalidate();
+				if ( msg.obj instanceof String ) {
+					String value = (String) msg.obj;
+					RocketTrackState.getInstance().addLine(value);
+					main.get().output.invalidate();
+				} else if ( msg.obj instanceof PositionSentence ) {
+					Log.d(TAG, "New rocketPosition: " + msg.obj);
+				}
 				break;
-			/*
 			case MSG_STATE_CHANGE:
-				if(D) Log.d(TAG, "MSG_STATE_CHANGE: " + msg.arg1);
+				Log.d(TAG, "MSG_STATE_CHANGE: " + msg.arg1);
 				switch (msg.arg1) {
-				case TelemetryService.STATE_CONNECTED:
+				case RocketLocationService.STATE_CONNECTED:
+					/*
 					ad.mConfigData = (AltosConfigData) msg.obj;
 					String str = String.format(" %s S/N: %d", ad.mConfigData.product, ad.mConfigData.serial);
 					ad.mTitle.setText(R.string.title_connected_to);
 					ad.mTitle.append(str);
-					Toast.makeText(ad.getApplicationContext(), "Connected to " + str, Toast.LENGTH_SHORT).show();
+					*/
+					Toast.makeText(ad.getApplicationContext(), "Connected to <devicename>" , Toast.LENGTH_SHORT).show();
 					break;
-				case TelemetryService.STATE_CONNECTING:
-					ad.mTitle.setText(R.string.title_connecting);
+				case RocketLocationService.STATE_CONNECTING:
+//					ad.mTitle.setText(R.string.title_connecting);
 					break;
-				case TelemetryService.STATE_READY:
-				case TelemetryService.STATE_NONE:
-					ad.mConfigData = null;
-					ad.mTitle.setText(R.string.title_not_connected);
+				case RocketLocationService.STATE_READY:
+				case RocketLocationService.STATE_NONE:
+//					ad.mConfigData = null;
+//					ad.mTitle.setText(R.string.title_not_connected);
 					break;
 				}
-				break;
-			case MSG_TELEMETRY:
-				ad.update_ui((AltosState) msg.obj);
 				break;
 			case MSG_LOCATION:
-				ad.set_location((Location) msg.obj);
+				// This is the handset's location.
 				break;
-			case MSG_CRC_ERROR:
-			case MSG_UPDATE_AGE:
-				if (ad.saved_state != null) {
-					ad.mAgeView.setText(String.format("%d", (System.currentTimeMillis() - ad.saved_state.report_time + 500) / 1000));
-				}
-				break;
-			*/
 			}
 		}
 	};

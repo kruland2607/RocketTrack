@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.sf.marineapi.nmea.parser.SentenceFactory;
+import net.sf.marineapi.nmea.sentence.PositionSentence;
+import net.sf.marineapi.nmea.sentence.Sentence;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -38,10 +41,10 @@ public class RocketLocationService extends Service implements LocationListener {
 	// internally track state of bluetooth connection
 	private int state = STATE_NONE;
 
-	private static final int STATE_NONE       = 0;
-	private static final int STATE_READY      = 1;
-	private static final int STATE_CONNECTING = 2;
-	private static final int STATE_CONNECTED  = 3;
+	static final int STATE_NONE       = 0;
+	static final int STATE_READY      = 1;
+	static final int STATE_CONNECTING = 2;
+	static final int STATE_CONNECTED  = 3;
 
 	// Timer - we wake up every now and then to decide if the service should stop
 	private Timer timer = new Timer();
@@ -110,6 +113,15 @@ public class RocketLocationService extends Service implements LocationListener {
 			case MSG_TELEMETRY:
 				// forward telemetry messages
 				s.sendMessageToClients(Message.obtain(null, Main.MSG_TELEMETRY, msg.obj));
+				try {
+					String msgString = (String) msg.obj;
+					Sentence sentence = SentenceFactory.getInstance().createParser(msgString);
+					if ( sentence instanceof PositionSentence) { 
+						s.sendMessageToClients(Message.obtain(null, Main.MSG_TELEMETRY, sentence));
+					}
+				} catch (Throwable t) {
+					Log.d(TAG,"Exception: " + t);
+				}
 				break;
 			default:
 				super.handleMessage(msg);
