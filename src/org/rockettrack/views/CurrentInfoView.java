@@ -1,12 +1,11 @@
 package org.rockettrack.views;
 
-import net.sf.marineapi.nmea.util.Position;
-
 import org.rockettrack.R;
 import org.rockettrack.RocketTrackState;
 
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.location.Location;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
@@ -64,11 +63,18 @@ public class CurrentInfoView extends LinearLayout {
 	
 	private void updateFields() {
 		
-		Position rocketPos = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
+		Location rocketPos = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 		if( rocketPos != null ) {
 			rocketAlt.setText( String.valueOf(rocketPos.getAltitude() ));
 			rocketLon.setText( String.valueOf(rocketPos.getLongitude() ));
 			rocketLat.setText( String.valueOf(rocketPos.getLatitude() ));
+		}
+		
+		Location handsetLoc = RocketTrackState.getInstance().getLocationDataAdapter().getMyLocation();
+		if ( handsetLoc != null ) {
+			myAlt.setText( String.valueOf(handsetLoc.getAltitude()));
+			myLon.setText( String.valueOf(handsetLoc.getLongitude()));
+			myLat.setText( String.valueOf(handsetLoc.getLatitude()));
 		}
 	}
 	

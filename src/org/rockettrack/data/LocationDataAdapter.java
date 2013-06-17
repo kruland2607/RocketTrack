@@ -1,8 +1,5 @@
 package org.rockettrack.data;
 
-import net.sf.marineapi.nmea.parser.DataNotAvailableException;
-import net.sf.marineapi.nmea.sentence.PositionSentence;
-import net.sf.marineapi.nmea.util.Position;
 import android.location.Location;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,21 +8,17 @@ import android.widget.BaseAdapter;
 
 public class LocationDataAdapter extends BaseAdapter {
 
-	Position rocketPosition;
+	Location rocketPosition;
 	
 	Location myLocation;
 
-	public Position getRocketPosition() {
+	public Location getRocketPosition() {
 		return rocketPosition;
 	}
 
-	public void setRocketPosition(PositionSentence rocketPosition) {
-		try {
-			this.rocketPosition = rocketPosition.getPosition();
-			this.notifyDataSetChanged();
-		} catch ( DataNotAvailableException ex ) {
-			
-		}
+	public void setRocketLocation(Location rocketPosition) {
+		this.rocketPosition = rocketPosition;
+		this.notifyDataSetChanged();
 	}
 
 	public Location getMyLocation() {

@@ -5,19 +5,14 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import net.sf.marineapi.nmea.parser.SentenceFactory;
-import net.sf.marineapi.nmea.sentence.PositionSentence;
-import net.sf.marineapi.nmea.sentence.Sentence;
+import org.rockettrack.nmea.Parser;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
-import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -112,9 +107,9 @@ public class RocketLocationService extends Service {
 				s.sendMessageToClients(Message.obtain(null, Main.MSG_RAWTELEM, msg.obj));
 				try {
 					String msgString = (String) msg.obj;
-					Sentence sentence = SentenceFactory.getInstance().createParser(msgString);
-					if ( sentence instanceof PositionSentence) { 
-						s.sendMessageToClients(Message.obtain(null, Main.MSG_TELEMETRY, sentence));
+					Location l = Parser.parse(msgString);
+					if( l != null ) {
+						s.sendMessageToClients(Message.obtain(null, Main.MSG_TELEMETRY, l));
 					}
 				} catch (Throwable t) {
 					Log.d(TAG,"Exception: " + t);

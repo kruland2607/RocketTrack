@@ -2,8 +2,6 @@ package org.rockettrack;
 
 import java.lang.ref.WeakReference;
 
-import net.sf.marineapi.nmea.sentence.PositionSentence;
-
 import org.rockettrack.util.SystemUiHider;
 import org.taptwo.android.widget.CircleFlowIndicator;
 import org.taptwo.android.widget.ViewFlow;
@@ -17,6 +15,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,6 +24,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -56,6 +57,8 @@ public class Main extends FragmentActivity {
 	// Local Bluetooth adapter
 	private BluetoothAdapter mBluetoothAdapter = null;
 
+	private HandsetLocationListener handsetListener = new HandsetLocationListener();
+	
 	//
 	private boolean mIsBound   = false;
 	private Messenger mService = null;
@@ -205,9 +208,29 @@ public class Main extends FragmentActivity {
 		viewFlow.setAdapter(new PageAdapter());
 		CircleFlowIndicator indic = (CircleFlowIndicator) findViewById(R.id.viewflowindic);
 		viewFlow.setFlowIndicator(indic);
-
+		
 	}
 
+	private void registerLocationListener() {
+		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+		boolean enabled = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		if( !enabled ) {
+			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+			startActivity(intent);
+		} else {
+			// FIXME - well, really we should start this after the location is established.
+			Location lastLocation = service.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+			RocketTrackState.getInstance().getLocationDataAdapter().setMyLocation(lastLocation);
+
+			service.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 30, handsetListener);
+		}
+	}
+	
+	private void deregisterLocationListener() {
+		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+		service.removeUpdates( handsetListener );
+	}
+	
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -232,6 +255,9 @@ public class Main extends FragmentActivity {
 		startService(new Intent(Main.this, RocketLocationService.class));
 
 		doBindService();
+
+		registerLocationListener();
+
 	}
 
 	@Override
@@ -240,6 +266,8 @@ public class Main extends FragmentActivity {
 		Log.e(TAG, "-- ON STOP --");
 
 		doUnbindService();
+		
+		deregisterLocationListener();
 	}
 
 	/* If your min SDK version is < 8 you need to trigger the onConfigurationChanged in ViewFlow manually, like this */	
@@ -391,8 +419,8 @@ public class Main extends FragmentActivity {
 			Main ad = main.get();
 			switch (msg.what) {
 			case MSG_TELEMETRY:
-				PositionSentence s = (PositionSentence) msg.obj;
-				RocketTrackState.getInstance().getLocationDataAdapter().setRocketPosition(s);
+				Location s = (Location) msg.obj;
+				RocketTrackState.getInstance().getLocationDataAdapter().setRocketLocation(s);
 				break;
 			case MSG_RAWTELEM:
 				String value = (String) msg.obj;
