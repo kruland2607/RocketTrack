@@ -14,9 +14,9 @@ public class Parser {
 			
 			String timeString = p[1];
 			String latString = p[2];
-			String latumString = p[3];
+			String latHemString = p[3];
 			String lonString = p[4];
-			String lonumString = p[5];
+			String lonHemString = p[5];
 			String fixString = p[6];
 			String satString = p[7];
 			String hdopString = p[8];
@@ -32,13 +32,13 @@ public class Parser {
 				}
 			}
 			{
-				Double d = toDecimalDegrees(latString, latumString);
+				Double d = toDecimalDegrees(latString, latHemString);
 				if( d != null ) {
 					l.setLatitude(d);
 				}
 			}
 			{
-				Double d = toDecimalDegrees(lonString, lonumString);
+				Double d = toDecimalDegrees(lonString, lonHemString);
 				if( d != null ) {
 					l.setLongitude(d);
 				}
