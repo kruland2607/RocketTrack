@@ -178,6 +178,7 @@ public class Main extends FragmentActivity {
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
 		findViewById(R.id.stop_button).setOnTouchListener(mDelayHideTouchListener);
+		
 		((Button) findViewById(R.id.stop_button)).setOnClickListener( new OnClickListener() {
 
 			@Override
@@ -188,7 +189,19 @@ public class Main extends FragmentActivity {
 			
 		});
 		
+		findViewById(R.id.conect_button).setOnTouchListener(mDelayHideTouchListener);
+		((Button) findViewById(R.id.conect_button)).setOnClickListener( new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
+				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+
+			}
+		});
+		
 		viewFlow = (ViewFlow) findViewById(R.id.viewflow);
+		viewFlow.setOnTouchListener(mDelayHideTouchListener);
 		viewFlow.setAdapter(new PageAdapter());
 		CircleFlowIndicator indic = (CircleFlowIndicator) findViewById(R.id.viewflowindic);
 		viewFlow.setFlowIndicator(indic);
@@ -245,13 +258,7 @@ public class Main extends FragmentActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		Intent serverIntent = null;
 		switch (item.getItemId()) {
-		case R.id.connect_scan:
-			// Launch the DeviceListActivity to see devices and do scan
-			serverIntent = new Intent(this, DeviceListActivity.class);
-			startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-			return true;
 		}
 		return false;
 	}

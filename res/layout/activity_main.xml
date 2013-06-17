@@ -44,6 +44,14 @@
             tools:ignore="UselessParent" >
 
             <Button
+                android:id="@+id/conect_button"
+                style="?buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/connect_device" />
+            
+            <Button
                 android:id="@+id/stop_button"
                 style="?buttonBarButtonStyle"
                 android:layout_width="0dp"

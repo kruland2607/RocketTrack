@@ -26,7 +26,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
-public class RocketLocationService extends Service implements LocationListener {
+public class RocketLocationService extends Service {
 	
 	private final static String TAG = "RocketLocationService";
 
@@ -52,9 +52,6 @@ public class RocketLocationService extends Service implements LocationListener {
 	ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
 	final Handler   mHandler   = new IncomingHandler(this);
 	final Messenger mMessenger = new Messenger(mHandler); // Target we publish for clients to send messages to IncomingHandler.
-
-	// Last data seen; send to UI when it starts
-	private Location last_location;
 
 	// Name of the connected device
 	private BluetoothDevice device           = null;
@@ -211,11 +208,6 @@ public class RocketLocationService extends Service implements LocationListener {
 		// Start our timer - first event in 10 seconds, then every 10 seconds after that.
 		timer.scheduleAtFixedRate(new TimerTask(){ public void run() {onTimerTick();}}, 10000L, 10000L);
 
-		// Listen for GPS and Network position updates
-		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-		
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
 	}
 
 	@Override
@@ -225,7 +217,7 @@ public class RocketLocationService extends Service implements LocationListener {
 		CharSequence text = getText(R.string.telemetry_service_started);
 
 		// Create notification to be displayed while the service runs
-		Notification notification = new Notification(R.drawable.am_status_c, text, 0);
+		Notification notification = new Notification(R.drawable.ic_launcher, text, 0);
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
@@ -248,9 +240,6 @@ public class RocketLocationService extends Service implements LocationListener {
 	@Override
 	public void onDestroy() {
 
-		// Stop listening for location updates
-		((LocationManager) getSystemService(Context.LOCATION_SERVICE)).removeUpdates(this);
-
 		// Stop the bluetooth Comms threads
 		stopAltosBluetooth();
 
@@ -262,30 +251,6 @@ public class RocketLocationService extends Service implements LocationListener {
 
 		// Tell the user we stopped.
 		Toast.makeText(this, R.string.telemetry_service_stopped, Toast.LENGTH_SHORT).show();
-	}
-
-	@Override
-	public void onLocationChanged(Location location) {
-		last_location = location;
-		sendMessageToClients(Message.obtain(null, Main.MSG_LOCATION, location));
-	}
-
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
