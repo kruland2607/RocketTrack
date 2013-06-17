@@ -1,34 +1,37 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res/org.rockettrack"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
     tools:context=".Main" >
 
-    <!--
-         The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc.
-    -->
-
-    <org.rockettrack.views.ConsoleOutputView
+    <LinearLayout
         android:id="@+id/fullscreen_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:keepScreenOn="true"
-        android:textColor="#33b5e5"
-        android:textSize="9sp"
-        android:textStyle="bold" />
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
 
-    <!--
-         This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows.
-    -->
+        <org.taptwo.android.widget.ViewFlow
+            android:id="@+id/viewflow"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            app:sidebuffer="3" >
+        </org.taptwo.android.widget.ViewFlow>
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true" >
+
+        <org.taptwo.android.widget.CircleFlowIndicator
+            android:id="@+id/viewflowindic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:padding="10dip"
+            app:fadeOut="1000"
+            app:inactiveType="fill" />
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
@@ -47,7 +50,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/stop" />
-
         </LinearLayout>
     </FrameLayout>
 

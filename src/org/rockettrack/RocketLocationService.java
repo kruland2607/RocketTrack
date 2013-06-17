@@ -78,7 +78,7 @@ public class RocketLocationService extends Service implements LocationListener {
 				try {
 					// Now we try to send the freshly connected UI any relavant information about what
 					// we're talking to - Basically state and Config Data.
-					msg.replyTo.send(Message.obtain(null, Main.MSG_STATE_CHANGE, 1/*s.state*/, -1, null/*s.mConfigData*/));
+					msg.replyTo.send(Message.obtain(null, Main.MSG_STATE_CHANGE, s.state, -1, s.device));
 					// We also send any recent telemetry or location data that's cached
 //					if (s.last_location   != null) msg.replyTo.send(Message.obtain(null, AltosDroid.MSG_LOCATION , s.last_location  ));
 				} catch (RemoteException e) {
@@ -112,7 +112,7 @@ public class RocketLocationService extends Service implements LocationListener {
 				break;
 			case MSG_TELEMETRY:
 				// forward telemetry messages
-				s.sendMessageToClients(Message.obtain(null, Main.MSG_TELEMETRY, msg.obj));
+				s.sendMessageToClients(Message.obtain(null, Main.MSG_RAWTELEM, msg.obj));
 				try {
 					String msgString = (String) msg.obj;
 					Sentence sentence = SentenceFactory.getInstance().createParser(msgString);
@@ -133,7 +133,7 @@ public class RocketLocationService extends Service implements LocationListener {
 		Log.d(TAG, "setState(): " + state + " -> " + s);
 		state = s;
 
-		sendMessageToClients(Message.obtain(null, Main.MSG_STATE_CHANGE, state, -1, null));
+		sendMessageToClients(Message.obtain(null, Main.MSG_STATE_CHANGE, state, -1, device));
 	}
 
 	private void sendMessageToClients(Message m) {

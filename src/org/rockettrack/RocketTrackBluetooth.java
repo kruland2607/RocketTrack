@@ -160,7 +160,8 @@ public class RocketTrackBluetooth implements Runnable {
 				input_thread.start();
 
 				// Let TelemetryService know we're connected
-				handler.obtainMessage(RocketLocationService.MSG_CONNECTED).sendToTarget();
+				Message m = handler.obtainMessage(RocketLocationService.MSG_CONNECTED,device.getName());
+				m.sendToTarget();
 
 				// Notify other waiting threads, now that we're connected
 				RocketTrackBluetooth.this.notifyAll();

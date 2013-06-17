@@ -5,7 +5,8 @@ import java.lang.ref.WeakReference;
 import net.sf.marineapi.nmea.sentence.PositionSentence;
 
 import org.rockettrack.util.SystemUiHider;
-import org.rockettrack.views.ConsoleOutputView;
+import org.taptwo.android.widget.CircleFlowIndicator;
+import org.taptwo.android.widget.ViewFlow;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -15,6 +16,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,14 +25,16 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -46,6 +50,7 @@ public class Main extends FragmentActivity {
 	// Message types received by our Handler
 	public static final int MSG_STATE_CHANGE    = 1;
 	public static final int MSG_TELEMETRY       = 2;
+	public static final int MSG_RAWTELEM        = 3;
 	public static final int MSG_LOCATION	    = 4;
 
 	// Local Bluetooth adapter
@@ -60,7 +65,8 @@ public class Main extends FragmentActivity {
 	private static final int REQUEST_CONNECT_DEVICE = 1;
 	private static final int REQUEST_ENABLE_BT      = 2;
 
-	private ConsoleOutputView output;
+	private ViewFlow viewFlow;
+
 	
 	/**
 	 * Whether or not the system UI should be auto-hidden after
@@ -182,7 +188,11 @@ public class Main extends FragmentActivity {
 			
 		});
 		
-		output = ((ConsoleOutputView) findViewById(R.id.fullscreen_content));
+		viewFlow = (ViewFlow) findViewById(R.id.viewflow);
+		viewFlow.setAdapter(new PageAdapter());
+		CircleFlowIndicator indic = (CircleFlowIndicator) findViewById(R.id.viewflowindic);
+		viewFlow.setFlowIndicator(indic);
+
 	}
 
 	@Override
@@ -217,6 +227,13 @@ public class Main extends FragmentActivity {
 		Log.e(TAG, "-- ON STOP --");
 
 		doUnbindService();
+	}
+
+	/* If your min SDK version is < 8 you need to trigger the onConfigurationChanged in ViewFlow manually, like this */	
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		viewFlow.onConfigurationChanged(newConfig);
 	}
 
 	@Override
@@ -277,7 +294,6 @@ public class Main extends FragmentActivity {
 		String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
 		// Get the BLuetoothDevice object
 		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-		// Attempt to connect to the device
 		try {
 			Log.d(TAG, "Connecting to " + device.getName());
 			mService.send(Message.obtain(null, RocketLocationService.MSG_CONNECT, device));
@@ -308,6 +324,38 @@ public class Main extends FragmentActivity {
 		}
 	}
 
+	public class PageAdapter extends BaseAdapter {
+
+		private LayoutInflater mInflater;
+
+		private final int[] ids = { R.layout.console_view, R.layout.current_view };
+		
+		public PageAdapter() {
+			mInflater = (LayoutInflater) Main.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		}
+
+		@Override
+		public int getCount() {
+			return ids.length;
+		}
+
+		@Override
+		public Object getItem(int position) {
+			return position;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return position;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			return 
+			mInflater.inflate(ids[position], parent, false);
+		}
+	}
+	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mService = new Messenger(service);
@@ -336,25 +384,19 @@ public class Main extends FragmentActivity {
 			Main ad = main.get();
 			switch (msg.what) {
 			case MSG_TELEMETRY:
-				if ( msg.obj instanceof String ) {
-					String value = (String) msg.obj;
-					RocketTrackState.getInstance().addLine(value);
-					main.get().output.invalidate();
-				} else if ( msg.obj instanceof PositionSentence ) {
-					Log.d(TAG, "New rocketPosition: " + msg.obj);
-				}
+				PositionSentence s = (PositionSentence) msg.obj;
+				RocketTrackState.getInstance().getLocationDataAdapter().setRocketPosition(s);
+				break;
+			case MSG_RAWTELEM:
+				String value = (String) msg.obj;
+				RocketTrackState.getInstance().getRawDataAdapter().addRawData(value);
 				break;
 			case MSG_STATE_CHANGE:
 				Log.d(TAG, "MSG_STATE_CHANGE: " + msg.arg1);
 				switch (msg.arg1) {
 				case RocketLocationService.STATE_CONNECTED:
-					/*
-					ad.mConfigData = (AltosConfigData) msg.obj;
-					String str = String.format(" %s S/N: %d", ad.mConfigData.product, ad.mConfigData.serial);
-					ad.mTitle.setText(R.string.title_connected_to);
-					ad.mTitle.append(str);
-					*/
-					Toast.makeText(ad.getApplicationContext(), "Connected to <devicename>" , Toast.LENGTH_SHORT).show();
+					BluetoothDevice device = (BluetoothDevice) msg.obj;
+					Toast.makeText(ad.getApplicationContext(), "Connected to " + device.getName() , Toast.LENGTH_SHORT).show();
 					break;
 				case RocketLocationService.STATE_CONNECTING:
 //					ad.mTitle.setText(R.string.title_connecting);

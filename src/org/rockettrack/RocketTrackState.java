@@ -1,10 +1,7 @@
 package org.rockettrack;
 
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import net.sf.marineapi.nmea.sentence.PositionSentence;
-import android.location.Location;
+import org.rockettrack.data.LocationDataAdapter;
+import org.rockettrack.data.RawDataAdapter;
 
 public class RocketTrackState {
 
@@ -14,41 +11,15 @@ public class RocketTrackState {
 		return instance;
 	}
 	
-	PositionSentence rocketPosition;
+	LocationDataAdapter locData = new LocationDataAdapter();
 	
-	Location myLocation;
-
-	private Queue<String> lines = new ArrayBlockingQueue<String>(100);
-
-	public PositionSentence getRocketPosition() {
-		return rocketPosition;
-	}
-
-	public void setRocketPosition(PositionSentence rocketPosition) {
-		this.rocketPosition = rocketPosition;
-	}
-
-	public Location getMyLocation() {
-		return myLocation;
-	}
-
-	public void setMyLocation(Location myLocation) {
-		this.myLocation = myLocation;
+	RawDataAdapter rawData = new RawDataAdapter();
+	
+	public RawDataAdapter getRawDataAdapter(){
+		return rawData;
 	}
 	
-	public void addLine(String s ) {
-		if ( lines.offer(s)  == true ) {
-			return;
-		}
-		lines.poll();
-		lines.add(s);
-	}
-
-	public void resizeLines( int newSize ) {
-		lines = new ArrayBlockingQueue<String>(newSize);
-	}
-	
-	public String[] getLines() {
-		return lines.toArray(new String[0] );
+	public LocationDataAdapter getLocationDataAdapter() {
+		return locData;
 	}
 }

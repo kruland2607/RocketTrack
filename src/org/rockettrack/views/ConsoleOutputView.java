@@ -1,10 +1,9 @@
 package org.rockettrack.views;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 import org.rockettrack.RocketTrackState;
 
 import android.content.Context;
+import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
@@ -18,6 +17,19 @@ public class ConsoleOutputView extends ImageView {
 	public ConsoleOutputView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		lineView = new TextView(context, attrs, defStyle);
+		RocketTrackState.getInstance().getRawDataAdapter().registerDataSetObserver( new DataSetObserver() {
+
+			@Override
+			public void onChanged() {
+				ConsoleOutputView.this.invalidate();
+			}
+
+			@Override
+			public void onInvalidated() {
+				ConsoleOutputView.this.invalidate();
+			}
+			
+		});
 	}
 
 	public ConsoleOutputView(Context context, AttributeSet attrs) {
@@ -34,7 +46,7 @@ public class ConsoleOutputView extends ImageView {
 		Paint textPaint = lineView.getPaint();
 		int baseline = computeBaseLine();
 		
-		String[] lines = RocketTrackState.getInstance().getLines();
+		String[] lines = RocketTrackState.getInstance().getRawDataAdapter().getRawData();
 		int y= -1* Math.round( textPaint.getFontMetrics().top ) ;
 		for( String s : lines) {
 			canvas.drawText(s,0,y,textPaint);
@@ -46,7 +58,7 @@ public class ConsoleOutputView extends ImageView {
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
 		int numberOfLines = h / computeBaseLine() - 1;
-		RocketTrackState.getInstance().resizeLines(numberOfLines);
+		RocketTrackState.getInstance().getRawDataAdapter().resizeLines(numberOfLines);
 	}
 
 	private int computeBaseLine() {
