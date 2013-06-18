@@ -21,6 +21,9 @@ public class CurrentInfoView extends LinearLayout {
 	TextView myLon;
 	TextView myLat;
 	
+	TextView bearing;
+	TextView distance;
+	
 	public CurrentInfoView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		RocketTrackState.getInstance().getLocationDataAdapter().registerDataSetObserver( new DataSetObserver() {
@@ -49,6 +52,9 @@ public class CurrentInfoView extends LinearLayout {
 		myLon = (TextView) findViewById(R.id.my_lon);
 		myLat = (TextView) findViewById(R.id.my_lat);
 		
+		bearing = (TextView) findViewById(R.id.bearing);
+		distance = (TextView) findViewById(R.id.distance);
+		
 		updateFields();
 	}
 
@@ -75,6 +81,11 @@ public class CurrentInfoView extends LinearLayout {
 			myAlt.setText( String.valueOf(handsetLoc.getAltitude()));
 			myLon.setText( String.valueOf(handsetLoc.getLongitude()));
 			myLat.setText( String.valueOf(handsetLoc.getLatitude()));
+		}
+		
+		if ( rocketPos != null && handsetLoc != null ) {
+			bearing.setText( String.valueOf(handsetLoc.bearingTo(rocketPos)));
+			distance.setText( String.valueOf(handsetLoc.distanceTo(rocketPos)));
 		}
 	}
 	
