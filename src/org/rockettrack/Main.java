@@ -56,7 +56,6 @@ public class Main extends FragmentActivity {
 	public static final int MSG_STATE_CHANGE    = 1;
 	public static final int MSG_TELEMETRY       = 2;
 	public static final int MSG_RAWTELEM        = 3;
-	public static final int MSG_LOCATION	    = 4;
 
 	// Local Bluetooth adapter
 	private BluetoothAdapter mBluetoothAdapter = null;
@@ -485,9 +484,6 @@ public class Main extends FragmentActivity {
 //					ad.mTitle.setText(R.string.title_not_connected);
 					break;
 				}
-				break;
-			case MSG_LOCATION:
-				// This is the handset's location.
 				break;
 			}
 		}
