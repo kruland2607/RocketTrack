@@ -11,9 +11,9 @@ public class RocketTrackState {
 		return instance;
 	}
 	
-	LocationDataAdapter locData = new LocationDataAdapter();
+	private LocationDataAdapter locData = new LocationDataAdapter();
 	
-	RawDataAdapter rawData = new RawDataAdapter();
+	private RawDataAdapter rawData = new RawDataAdapter();
 	
 	public RawDataAdapter getRawDataAdapter(){
 		return rawData;
