@@ -14,6 +14,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationManager;
@@ -24,6 +25,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -47,6 +49,8 @@ import android.widget.Toast;
  */
 public class Main extends FragmentActivity {
 	private final static String TAG = "RocketTrack.Main";
+	
+	private String PREFERED_DEVICE_KEY;
 	
 	// Message types received by our Handler
 	public static final int MSG_STATE_CHANGE    = 1;
@@ -105,16 +109,8 @@ public class Main extends FragmentActivity {
 
 		Log.d(TAG, "+++ ON CREATE +++");
 
-		// Get local Bluetooth adapter
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-		// If the adapter is null, then Bluetooth is not supported
-		if (mBluetoothAdapter == null) {
-			Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
-			finish();
-			return;
-		}
-
+		PREFERED_DEVICE_KEY = getResources().getString(R.string.prefered_device_key);
+		
 		setContentView(R.layout.activity_main);
 
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
@@ -246,6 +242,16 @@ public class Main extends FragmentActivity {
 		super.onStart();
 		Log.e(TAG, "++ ON START ++");
 
+		// Get local Bluetooth adapter
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+		// If the adapter is null, then Bluetooth is not supported
+		if (mBluetoothAdapter == null) {
+			Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+			finish();
+			return;
+		}
+
 		if (!mBluetoothAdapter.isEnabled()) {
 			Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
@@ -257,6 +263,33 @@ public class Main extends FragmentActivity {
 		doBindService();
 
 		registerLocationListener();
+		
+	}
+
+	protected void connectOrSelectDevice() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String prefered_device = prefs.getString(PREFERED_DEVICE_KEY, "");
+		if ( ! "".equals(prefered_device) ) {
+			// There was a mac address stored in preferences.  See if it's still paired.
+			BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(prefered_device);
+			if ( device != null ) {
+				// It's paired.  connect to it.
+				connectDevice(prefered_device);
+				return;
+			}
+		}
+
+		// The previous device either didn't exist, or wasn't valid...
+		
+		// forget the old value used.
+		SharedPreferences.Editor prefEditor = prefs.edit();
+		prefEditor.putString(PREFERED_DEVICE_KEY,"");
+		prefEditor.commit();
+		
+		// Ask the user to choose a new one.
+		Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
+		serverIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
 
 	}
 
@@ -298,13 +331,17 @@ public class Main extends FragmentActivity {
 		case REQUEST_CONNECT_DEVICE:
 			// When DeviceListActivity returns with a device to connect to
 			if (resultCode == Activity.RESULT_OK) {
-				connectDevice(data);
+				// Get the device MAC address
+				String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+				connectDevice(address);
 			}
+			delayedHide(AUTO_HIDE_DELAY_MILLIS);
 			break;
 		case REQUEST_ENABLE_BT:
 			// When the request to enable Bluetooth returns
 			if (resultCode == Activity.RESULT_OK) {
 				// Bluetooth is now enabled, so set up a chat session
+				// FIXME!  Should start up anything bluetoothy here.
 				//setupChat();
 			} else {
 				// User did not enable Bluetooth or an error occured
@@ -324,11 +361,9 @@ public class Main extends FragmentActivity {
 		}
 	}
 
-	private void connectDevice(Intent data) {
-		// Get the device MAC address
-		String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-		// Get the BLuetoothDevice object
-		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+	private void connectDevice(String macAddress) {
+		// Get the BluetoothDevice object
+		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
 		try {
 			Log.d(TAG, "Connecting to " + device.getName());
 			mService.send(Message.obtain(null, RocketLocationService.MSG_CONNECT, device));
@@ -398,6 +433,9 @@ public class Main extends FragmentActivity {
 				Message msg = Message.obtain(null, RocketLocationService.MSG_REGISTER_CLIENT);
 				msg.replyTo = mMessenger;
 				mService.send(msg);
+				
+				Main.this.connectOrSelectDevice();
+				
 			} catch (RemoteException e) {
 				// In this case the service has crashed before we could even do anything with it
 			}
@@ -410,7 +448,7 @@ public class Main extends FragmentActivity {
 	};
 
 	// The Handler that gets information back from the Telemetry Service
-	static class IncomingHandler extends Handler {
+	class IncomingHandler extends Handler {
 		private final WeakReference<Main> main;
 		IncomingHandler(Main ad) { main = new WeakReference<Main>(ad); }
 
@@ -432,6 +470,11 @@ public class Main extends FragmentActivity {
 				case RocketLocationService.STATE_CONNECTED:
 					BluetoothDevice device = (BluetoothDevice) msg.obj;
 					Toast.makeText(ad.getApplicationContext(), "Connected to " + device.getName() , Toast.LENGTH_SHORT).show();
+					// We connected to a device - so save its mac for next time.
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Main.this);
+					SharedPreferences.Editor prefEditor = prefs.edit();
+					prefEditor.putString(PREFERED_DEVICE_KEY, device.getAddress());
+					prefEditor.commit();
 					break;
 				case RocketLocationService.STATE_CONNECTING:
 //					ad.mTitle.setText(R.string.title_connecting);
