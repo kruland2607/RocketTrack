@@ -169,6 +169,10 @@ public class DeviceListActivity extends Activity {
 
 			// Set result and finish this Activity
 			setResult(Activity.RESULT_OK, intent);
+			
+			// Clear the old raw data.
+			RocketTrackState.getInstance().getRawDataAdapter().clearRawData();
+			
 			finish();
 		}
 	};

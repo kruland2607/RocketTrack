@@ -57,4 +57,9 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 		return lines.toArray( new String[0] );
 	}
 	
+	public void clearRawData() {
+		lines.clear();
+		this.notifyDataSetChanged();
+	}
+	
 }
