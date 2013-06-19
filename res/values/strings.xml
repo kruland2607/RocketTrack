@@ -3,8 +3,8 @@
 
     <string name="app_name">RocketTrack</string>
     <string name="stop">Stop Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="bt_not_enabled">Bluetooth was not enabled.</string>
+    <string name="gps_not_enabled">GPS was not enabled.</string>
 
     <!-- DeviceListActivity -->
     <string name="scanning">scanning for devices…</string>

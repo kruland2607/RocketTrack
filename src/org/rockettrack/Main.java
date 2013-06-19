@@ -8,10 +8,12 @@ import org.taptwo.android.widget.ViewFlow;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -46,12 +48,25 @@ import android.widget.Toast;
  * status bar and navigation/system bar) with user interaction.
  * 
  * @see SystemUiHider
+ * 
+ * Startup process goes like this:
+ * 
+ * 1) check if bluetooth is enabled.
+ *   - if not send intent to enable.
+ *     a) if enabled move to (2)
+ *     b) if not enabled finish()
+ * 2) check if gps is enabled.
+ *   - if not send intent to enable.
+ *     a) if enabled move to (3)
+ *     b) if not enabled, finish()
+ * 3) start listeners
+ * 
  */
 public class Main extends FragmentActivity {
 	private final static String TAG = "RocketTrack.Main";
-	
+
 	private String PREFERED_DEVICE_KEY;
-	
+
 	// Message types received by our Handler
 	public static final int MSG_STATE_CHANGE    = 1;
 	public static final int MSG_TELEMETRY       = 2;
@@ -61,7 +76,7 @@ public class Main extends FragmentActivity {
 	private BluetoothAdapter mBluetoothAdapter = null;
 
 	private HandsetLocationListener handsetListener = new HandsetLocationListener();
-	
+
 	//
 	private boolean mIsBound   = false;
 	private Messenger mService = null;
@@ -73,7 +88,7 @@ public class Main extends FragmentActivity {
 
 	private ViewFlow viewFlow;
 
-	
+
 	/**
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -109,7 +124,7 @@ public class Main extends FragmentActivity {
 		Log.d(TAG, "+++ ON CREATE +++");
 
 		PREFERED_DEVICE_KEY = getResources().getString(R.string.prefered_device_key);
-		
+
 		setContentView(R.layout.activity_main);
 
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
@@ -121,44 +136,44 @@ public class Main extends FragmentActivity {
 				HIDER_FLAGS);
 		mSystemUiHider.setup();
 		mSystemUiHider
-				.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-					// Cached values.
-					int mControlsHeight;
-					int mShortAnimTime;
+		.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+			// Cached values.
+			int mControlsHeight;
+			int mShortAnimTime;
 
-					@Override
-					@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-					public void onVisibilityChange(boolean visible) {
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-							// If the ViewPropertyAnimator API is available
-							// (Honeycomb MR2 and later), use it to animate the
-							// in-layout UI controls at the bottom of the
-							// screen.
-							if (mControlsHeight == 0) {
-								mControlsHeight = controlsView.getHeight();
-							}
-							if (mShortAnimTime == 0) {
-								mShortAnimTime = getResources().getInteger(
-										android.R.integer.config_shortAnimTime);
-							}
-							controlsView
-									.animate()
-									.translationY(visible ? 0 : mControlsHeight)
-									.setDuration(mShortAnimTime);
-						} else {
-							// If the ViewPropertyAnimator APIs aren't
-							// available, simply show or hide the in-layout UI
-							// controls.
-							controlsView.setVisibility(visible ? View.VISIBLE
-									: View.GONE);
-						}
-
-						if (visible && AUTO_HIDE) {
-							// Schedule a hide().
-							delayedHide(AUTO_HIDE_DELAY_MILLIS);
-						}
+			@Override
+			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+			public void onVisibilityChange(boolean visible) {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+					// If the ViewPropertyAnimator API is available
+					// (Honeycomb MR2 and later), use it to animate the
+					// in-layout UI controls at the bottom of the
+					// screen.
+					if (mControlsHeight == 0) {
+						mControlsHeight = controlsView.getHeight();
 					}
-				});
+					if (mShortAnimTime == 0) {
+						mShortAnimTime = getResources().getInteger(
+								android.R.integer.config_shortAnimTime);
+					}
+					controlsView
+					.animate()
+					.translationY(visible ? 0 : mControlsHeight)
+					.setDuration(mShortAnimTime);
+				} else {
+					// If the ViewPropertyAnimator APIs aren't
+					// available, simply show or hide the in-layout UI
+					// controls.
+					controlsView.setVisibility(visible ? View.VISIBLE
+							: View.GONE);
+				}
+
+				if (visible && AUTO_HIDE) {
+					// Schedule a hide().
+					delayedHide(AUTO_HIDE_DELAY_MILLIS);
+				}
+			}
+		});
 
 		// Set up the user interaction to manually show or hide the system UI.
 		contentView.setOnClickListener(new View.OnClickListener() {
@@ -176,20 +191,20 @@ public class Main extends FragmentActivity {
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
 		findViewById(R.id.stop_button).setOnTouchListener(mDelayHideTouchListener);
-		
+
 		((Button) findViewById(R.id.stop_button)).setOnClickListener( new OnClickListener() {
 
 			@Override
 			public void onClick(View arg0) {
 				Main.this.onDoStop();
-				
+
 			}
-			
+
 		});
-		
+
 		findViewById(R.id.conect_button).setOnTouchListener(mDelayHideTouchListener);
 		((Button) findViewById(R.id.conect_button)).setOnClickListener( new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View arg0) {
 				Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
@@ -197,35 +212,27 @@ public class Main extends FragmentActivity {
 
 			}
 		});
-		
+
 		viewFlow = (ViewFlow) findViewById(R.id.viewflow);
 		viewFlow.setOnTouchListener(mDelayHideTouchListener);
 		viewFlow.setAdapter(new PageAdapter());
 		CircleFlowIndicator indic = (CircleFlowIndicator) findViewById(R.id.viewflowindic);
 		viewFlow.setFlowIndicator(indic);
-		
+
 	}
 
 	private void registerLocationListener() {
 		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-		boolean enabled = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
-		if( !enabled ) {
-			Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-			startActivity(intent);
-		} else {
-			// FIXME - well, really we should start this after the location is established.
-			Location lastLocation = service.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-			RocketTrackState.getInstance().getLocationDataAdapter().setMyLocation(lastLocation);
-
-			service.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 30, handsetListener);
-		}
+		Location lastLocation = service.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		RocketTrackState.getInstance().getLocationDataAdapter().setMyLocation(lastLocation);
+		service.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 30, handsetListener);
 	}
-	
+
 	private void deregisterLocationListener() {
 		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
 		service.removeUpdates( handsetListener );
 	}
-	
+
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -241,6 +248,12 @@ public class Main extends FragmentActivity {
 		super.onStart();
 		Log.e(TAG, "++ ON START ++");
 
+		// Do step 1.
+		checkForBluetooth();
+
+	}
+
+	private void checkForBluetooth() {
 		// Get local Bluetooth adapter
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -254,15 +267,50 @@ public class Main extends FragmentActivity {
 		if (!mBluetoothAdapter.isEnabled()) {
 			Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+		} else {
+			
+			// Step 2.
+			checkForGPS();
 		}
+	}
 
+	private void checkForGPS() {
+		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+		boolean enabled = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		if( !enabled ) {
+			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+			.setCancelable(false)
+			.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				public void onClick(final DialogInterface dialog, final int id) {
+					dialog.cancel();
+					Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+					startActivity(intent);
+				}
+			})
+			.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				public void onClick(final DialogInterface dialog, final int id) {
+					dialog.cancel();
+					Utils.displayAbortDialog(Main.this, R.string.gps_not_enabled);
+				}
+			});
+			final AlertDialog alert = builder.create();
+			alert.show();
+		} else {
+			
+			// Step 3
+			startServices();
+		}
+	}
+
+	private void startServices() {
 		// Start Telemetry Service
 		startService(new Intent(Main.this, RocketLocationService.class));
 
 		doBindService();
 
 		registerLocationListener();
-		
 	}
 
 	protected void connectOrSelectDevice() {
@@ -279,12 +327,12 @@ public class Main extends FragmentActivity {
 		}
 
 		// The previous device either didn't exist, or wasn't valid...
-		
+
 		// forget the old value used.
 		SharedPreferences.Editor prefEditor = prefs.edit();
 		prefEditor.putString(PREFERED_DEVICE_KEY,"");
 		prefEditor.commit();
-		
+
 		// Ask the user to choose a new one.
 		Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
 		serverIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
@@ -298,7 +346,7 @@ public class Main extends FragmentActivity {
 		Log.e(TAG, "-- ON STOP --");
 
 		doUnbindService();
-		
+
 		deregisterLocationListener();
 	}
 
@@ -322,7 +370,7 @@ public class Main extends FragmentActivity {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d(TAG, "onActivityResult " + resultCode);
@@ -339,20 +387,17 @@ public class Main extends FragmentActivity {
 		case REQUEST_ENABLE_BT:
 			// When the request to enable Bluetooth returns
 			if (resultCode == Activity.RESULT_OK) {
-				// Bluetooth is now enabled, so set up a chat session
-				// FIXME!  Should start up anything bluetoothy here.
-				//setupChat();
+				// Do step 2
+				checkForGPS();
 			} else {
 				// User did not enable Bluetooth or an error occured
 				Log.e(TAG, "BT not enabled");
-				stopService(new Intent(Main.this, RocketLocationService.class));
-				Toast.makeText(this, R.string.bt_not_enabled, Toast.LENGTH_SHORT).show();
-				finish();
+				Utils.displayAbortDialog(this, R.string.bt_not_enabled);
 			}
 			break;
 		}
 	}
-	
+
 	public void onDoStop() {
 		try {
 			mService.send(Message.obtain(null,RocketLocationService.MSG_DISCONNECTED,null));
@@ -398,7 +443,7 @@ public class Main extends FragmentActivity {
 		private LayoutInflater mInflater;
 
 		private final int[] ids = { R.layout.console_view, R.layout.current_view };
-		
+
 		public PageAdapter() {
 			mInflater = (LayoutInflater) Main.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
@@ -421,10 +466,10 @@ public class Main extends FragmentActivity {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			return 
-			mInflater.inflate(ids[position], parent, false);
+					mInflater.inflate(ids[position], parent, false);
 		}
 	}
-	
+
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mService = new Messenger(service);
@@ -432,9 +477,9 @@ public class Main extends FragmentActivity {
 				Message msg = Message.obtain(null, RocketLocationService.MSG_REGISTER_CLIENT);
 				msg.replyTo = mMessenger;
 				mService.send(msg);
-				
+
 				Main.this.connectOrSelectDevice();
-				
+
 			} catch (RemoteException e) {
 				// In this case the service has crashed before we could even do anything with it
 			}
@@ -447,7 +492,7 @@ public class Main extends FragmentActivity {
 	};
 
 	// The Handler that gets information back from the Telemetry Service
-	class IncomingHandler extends Handler {
+	static class IncomingHandler extends Handler {
 		private final WeakReference<Main> main;
 		IncomingHandler(Main ad) { main = new WeakReference<Main>(ad); }
 
@@ -470,18 +515,18 @@ public class Main extends FragmentActivity {
 					BluetoothDevice device = (BluetoothDevice) msg.obj;
 					Toast.makeText(ad.getApplicationContext(), "Connected to " + device.getName() , Toast.LENGTH_SHORT).show();
 					// We connected to a device - so save its mac for next time.
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Main.this);
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(main.get());
 					SharedPreferences.Editor prefEditor = prefs.edit();
-					prefEditor.putString(PREFERED_DEVICE_KEY, device.getAddress());
+					prefEditor.putString(main.get().PREFERED_DEVICE_KEY, device.getAddress());
 					prefEditor.commit();
 					break;
 				case RocketLocationService.STATE_CONNECTING:
-//					ad.mTitle.setText(R.string.title_connecting);
+					//					ad.mTitle.setText(R.string.title_connecting);
 					break;
 				case RocketLocationService.STATE_READY:
 				case RocketLocationService.STATE_NONE:
-//					ad.mConfigData = null;
-//					ad.mTitle.setText(R.string.title_not_connected);
+					//					ad.mConfigData = null;
+					//					ad.mTitle.setText(R.string.title_not_connected);
 					break;
 				}
 				break;
