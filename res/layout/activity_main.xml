@@ -30,9 +30,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:padding="10dip"
-            app:fadeOut="1000"
             app:inactiveType="fill" />
-
+<!--             app:fadeOut="1000" -->
+        
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
             style="?buttonBarStyle"
