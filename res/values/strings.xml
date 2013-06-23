@@ -5,6 +5,7 @@
     <string name="stop">Stop Button</string>
     <string name="bt_not_enabled">Bluetooth was not enabled.</string>
     <string name="gps_not_enabled">GPS was not enabled.</string>
+    <string name="memory_card_not_available">Memory card not available</string>
 
     <!-- DeviceListActivity -->
     <string name="scanning">scanning for devices…</string>

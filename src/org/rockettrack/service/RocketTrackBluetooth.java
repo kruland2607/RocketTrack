@@ -16,12 +16,13 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
-package org.rockettrack;
+package org.rockettrack.service;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -89,8 +90,8 @@ public class RocketTrackBluetooth implements Runnable {
 				if (c == '\n') {
 					if (line_count != 0) {
 						String string = new String(line_bytes, 0, line_count);
-						Log.d(TAG,"Line = " + string);
-						Message.obtain(handler, RocketLocationService.MSG_TELEMETRY, string).sendToTarget();
+						Log.v(TAG,"Line = " + string);
+						Message.obtain(handler, AppService.MSG_TELEMETRY, string).sendToTarget();
 						// Here we do something with the string.
 						//							add_bytes(line_bytes, line_count);
 						line_count = 0;
@@ -151,7 +152,7 @@ public class RocketTrackBluetooth implements Runnable {
 					input = null;
 					output = null;
 					RocketTrackBluetooth.this.notifyAll();
-					handler.obtainMessage(RocketLocationService.MSG_CONNECT_FAILED).sendToTarget();
+					handler.obtainMessage(AppService.MSG_CONNECT_FAILED).sendToTarget();
 					if (D) Log.e(TAG, "ConnectThread: Failed to establish connection");
 					return;
 				}
@@ -160,7 +161,7 @@ public class RocketTrackBluetooth implements Runnable {
 				input_thread.start();
 
 				// Let TelemetryService know we're connected
-				Message m = handler.obtainMessage(RocketLocationService.MSG_CONNECTED,device.getName());
+				Message m = handler.obtainMessage(AppService.MSG_CONNECTED,device.getName());
 				m.sendToTarget();
 
 				// Notify other waiting threads, now that we're connected
@@ -192,7 +193,7 @@ public class RocketTrackBluetooth implements Runnable {
 
 	private void connection_lost() {
 		if (D) Log.e(TAG, "Connection lost during I/O");
-		handler.obtainMessage(RocketLocationService.MSG_DISCONNECTED).sendToTarget();
+		handler.obtainMessage(AppService.MSG_DISCONNECTED).sendToTarget();
 	}
 
 	public void print(String data) {

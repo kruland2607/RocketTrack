@@ -11,15 +11,17 @@
     <!-- Permissions needed to access bluetooth -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="org.rockettrack.Main"
+            android:name="org.rockettrack.Startup"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:theme="@style/FullscreenTheme" >
@@ -30,12 +32,22 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".Main"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name"
+            android:theme="@style/FullscreenTheme" >
+        </activity>
+        <activity
             android:name=".DeviceListActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog" />
 
-        <service android:name=".RocketLocationService" />
+        <service android:name="org.rockettrack.service.RocketLocationService" />
+        <service
+            android:name=".service.AppService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

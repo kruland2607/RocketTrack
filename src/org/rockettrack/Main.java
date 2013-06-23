@@ -1,35 +1,28 @@
 package org.rockettrack;
 
-import java.lang.ref.WeakReference;
-
+import org.rockettrack.service.AppService;
+import org.rockettrack.service.AppServiceConnection;
+import org.rockettrack.service.BroadcastIntents;
 import org.rockettrack.util.SystemUiHider;
 import org.taptwo.android.widget.CircleFlowIndicator;
 import org.taptwo.android.widget.ViewFlow;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -49,42 +42,22 @@ import android.widget.Toast;
  * 
  * @see SystemUiHider
  * 
- * Startup process goes like this:
- * 
- * 1) check if bluetooth is enabled.
- *   - if not send intent to enable.
- *     a) if enabled move to (2)
- *     b) if not enabled finish()
- * 2) check if gps is enabled.
- *   - if not send intent to enable.
- *     a) if enabled move to (3)
- *     b) if not enabled, finish()
- * 3) start listeners
- * 
  */
 public class Main extends FragmentActivity {
 	private final static String TAG = "RocketTrack.Main";
 
 	private String PREFERED_DEVICE_KEY;
 
-	// Message types received by our Handler
-	public static final int MSG_STATE_CHANGE    = 1;
-	public static final int MSG_TELEMETRY       = 2;
-	public static final int MSG_RAWTELEM        = 3;
-
 	// Local Bluetooth adapter
 	private BluetoothAdapter mBluetoothAdapter = null;
 
-	private HandsetLocationListener handsetListener = new HandsetLocationListener();
-
-	//
-	private boolean mIsBound   = false;
-	private Messenger mService = null;
-	final Messenger mMessenger = new Messenger(new IncomingHandler(this));
+	/**
+	 * Service connection object
+	 */
+	private AppServiceConnection serviceConnection;
 
 	// Intent request codes
 	private static final int REQUEST_CONNECT_DEVICE = 1;
-	private static final int REQUEST_ENABLE_BT      = 2;
 
 	private ViewFlow viewFlow;
 
@@ -124,6 +97,12 @@ public class Main extends FragmentActivity {
 		Log.d(TAG, "+++ ON CREATE +++");
 
 		PREFERED_DEVICE_KEY = getResources().getString(R.string.prefered_device_key);
+
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+		serviceConnection = new AppServiceConnection(this, appServiceConnectionCallback);
+		serviceConnection.startService();
+		serviceConnection.bindAppService();
 
 		setContentView(R.layout.activity_main);
 
@@ -221,18 +200,6 @@ public class Main extends FragmentActivity {
 
 	}
 
-	private void registerLocationListener() {
-		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-		Location lastLocation = service.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-		RocketTrackState.getInstance().getLocationDataAdapter().setMyLocation(lastLocation);
-		service.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 30, handsetListener);
-	}
-
-	private void deregisterLocationListener() {
-		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-		service.removeUpdates( handsetListener );
-	}
-
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
@@ -244,75 +211,35 @@ public class Main extends FragmentActivity {
 	}
 
 	@Override
+	public void onResume() {
+		super.onResume();
+		Log.e(TAG, "++ ON RESUME ++");
+		serviceConnection.bindAppService();
+		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter(BroadcastIntents.BLUETOOTH_STATE_CHANGE));
+	}
+	
+	@Override
 	public void onStart() {
 		super.onStart();
 		Log.e(TAG, "++ ON START ++");
+	}
 
-		// Do step 1.
-		checkForBluetooth();
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.e(TAG, "-- ON STOP --");
+
+		serviceConnection.unbindAppService();
 
 	}
 
-	private void checkForBluetooth() {
-		// Get local Bluetooth adapter
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-		// If the adapter is null, then Bluetooth is not supported
-		if (mBluetoothAdapter == null) {
-			Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
-			finish();
-			return;
-		}
-
-		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-		} else {
-			
-			// Step 2.
-			checkForGPS();
-		}
+	@Override
+	public void onPause() {
+		super.onPause();
+		Log.e(TAG, "++ ON START ++");
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 	}
-
-	private void checkForGPS() {
-		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-		boolean enabled = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
-		if( !enabled ) {
-			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-			.setCancelable(false)
-			.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-				public void onClick(final DialogInterface dialog, final int id) {
-					dialog.cancel();
-					Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-					startActivity(intent);
-				}
-			})
-			.setNegativeButton("No", new DialogInterface.OnClickListener() {
-				public void onClick(final DialogInterface dialog, final int id) {
-					dialog.cancel();
-					Utils.displayAbortDialog(Main.this, R.string.gps_not_enabled);
-				}
-			});
-			final AlertDialog alert = builder.create();
-			alert.show();
-		} else {
-			
-			// Step 3
-			startServices();
-		}
-	}
-
-	private void startServices() {
-		// Start Telemetry Service
-		startService(new Intent(Main.this, RocketLocationService.class));
-
-		doBindService();
-
-		registerLocationListener();
-	}
-
+	
 	protected void connectOrSelectDevice() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		String prefered_device = prefs.getString(PREFERED_DEVICE_KEY, "");
@@ -338,16 +265,6 @@ public class Main extends FragmentActivity {
 		serverIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
 		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
 
-	}
-
-	@Override
-	public void onStop() {
-		super.onStop();
-		Log.e(TAG, "-- ON STOP --");
-
-		doUnbindService();
-
-		deregisterLocationListener();
 	}
 
 	/* If your min SDK version is < 8 you need to trigger the onConfigurationChanged in ViewFlow manually, like this */	
@@ -384,58 +301,20 @@ public class Main extends FragmentActivity {
 			}
 			delayedHide(AUTO_HIDE_DELAY_MILLIS);
 			break;
-		case REQUEST_ENABLE_BT:
-			// When the request to enable Bluetooth returns
-			if (resultCode == Activity.RESULT_OK) {
-				// Do step 2
-				checkForGPS();
-			} else {
-				// User did not enable Bluetooth or an error occured
-				Log.e(TAG, "BT not enabled");
-				Utils.displayAbortDialog(this, R.string.bt_not_enabled);
-			}
-			break;
 		}
 	}
 
 	public void onDoStop() {
-		try {
-			mService.send(Message.obtain(null,RocketLocationService.MSG_DISCONNECTED,null));
-		} catch ( RemoteException e ) {
-		}
+		serviceConnection.unbindAppService();
+		serviceConnection.stopService();
+
 	}
 
 	private void connectDevice(String macAddress) {
 		// Get the BluetoothDevice object
 		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
-		try {
-			Log.d(TAG, "Connecting to " + device.getName());
-			mService.send(Message.obtain(null, RocketLocationService.MSG_CONNECT, device));
-		} catch (RemoteException e) {
-		}
-	}
-
-	void doBindService() {
-		bindService(new Intent(this, RocketLocationService.class), mConnection, Context.BIND_AUTO_CREATE);
-		mIsBound = true;
-	}
-
-	void doUnbindService() {
-		if (mIsBound) {
-			// If we have received the service, and hence registered with it, then now is the time to unregister.
-			if (mService != null) {
-				try {
-					Message msg = Message.obtain(null, RocketLocationService.MSG_UNREGISTER_CLIENT);
-					msg.replyTo = mMessenger;
-					mService.send(msg);
-				} catch (RemoteException e) {
-					// There is nothing special we need to do if the service has crashed.
-				}
-			}
-			// Detach our existing connection.
-			unbindService(mConnection);
-			mIsBound = false;
-		}
+		Log.d(TAG, "Connecting to " + device.getName());
+		serviceConnection.getService().connectToRocketTracker(device);
 	}
 
 	public class PageAdapter extends BaseAdapter {
@@ -470,69 +349,56 @@ public class Main extends FragmentActivity {
 		}
 	}
 
-	private ServiceConnection mConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder service) {
-			mService = new Messenger(service);
-			try {
-				Message msg = Message.obtain(null, RocketLocationService.MSG_REGISTER_CLIENT);
-				msg.replyTo = mMessenger;
-				mService.send(msg);
+	/**
+	 * 
+	 */
+	private Runnable appServiceConnectionCallback = new Runnable() {
+		@Override
+		public void run() {
 
-				Main.this.connectOrSelectDevice();
-
-			} catch (RemoteException e) {
-				// In this case the service has crashed before we could even do anything with it
+			if (serviceConnection == null) {
+				return;
 			}
-		}
 
-		public void onServiceDisconnected(ComponentName className) {
-			// This is called when the connection with the service has been unexpectedly disconnected - process crashed.
-			mService = null;
+			AppService appService = serviceConnection.getService();
+
+			if (appService == null) {
+				Toast.makeText(Main.this, R.string.gps_not_enabled, Toast.LENGTH_SHORT).show();
+				return;
+			}
+
+			appService.startSensorUpdates();
+
+			Main.this.connectOrSelectDevice();
+
+//			currentLocation = appService.getCurrentLocation();
+
 		}
 	};
 
-	// The Handler that gets information back from the Telemetry Service
-	static class IncomingHandler extends Handler {
-		private final WeakReference<Main> main;
-		IncomingHandler(Main ad) { main = new WeakReference<Main>(ad); }
+	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 
 		@Override
-		public void handleMessage(Message msg) {
-			Main ad = main.get();
-			switch (msg.what) {
-			case MSG_TELEMETRY:
-				Location s = (Location) msg.obj;
-				RocketTrackState.getInstance().getLocationDataAdapter().setRocketLocation(s);
-				break;
-			case MSG_RAWTELEM:
-				String value = (String) msg.obj;
-				RocketTrackState.getInstance().getRawDataAdapter().addRawData(value);
-				break;
-			case MSG_STATE_CHANGE:
-				Log.d(TAG, "MSG_STATE_CHANGE: " + msg.arg1);
-				switch (msg.arg1) {
-				case RocketLocationService.STATE_CONNECTED:
-					BluetoothDevice device = (BluetoothDevice) msg.obj;
-					Toast.makeText(ad.getApplicationContext(), "Connected to " + device.getName() , Toast.LENGTH_SHORT).show();
-					// We connected to a device - so save its mac for next time.
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(main.get());
-					SharedPreferences.Editor prefEditor = prefs.edit();
-					prefEditor.putString(main.get().PREFERED_DEVICE_KEY, device.getAddress());
-					prefEditor.commit();
-					break;
-				case RocketLocationService.STATE_CONNECTING:
-					//					ad.mTitle.setText(R.string.title_connecting);
-					break;
-				case RocketLocationService.STATE_READY:
-				case RocketLocationService.STATE_NONE:
-					//					ad.mConfigData = null;
-					//					ad.mTitle.setText(R.string.title_not_connected);
-					break;
-				}
-				break;
+		public void onReceive(Context ctx, Intent intent) {
+			Log.d(TAG,"Got Message: " + intent.getAction());
+			Bundle b = intent.getExtras();
+			int state = b.getInt(BroadcastIntents.STATE);
+			BluetoothDevice d = (BluetoothDevice) b.getParcelable(BroadcastIntents.DEVICE);
+			if ( state == 3 ) {
+				onDeviceConnected(d);
 			}
 		}
+		
 	};
+	
+	private void onDeviceConnected( BluetoothDevice device ) {
+		Toast.makeText(this, "Connected to " + device.getName() , Toast.LENGTH_SHORT).show();
+		// We connected to a device - so save its mac for next time.
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor prefEditor = prefs.edit();
+		prefEditor.putString(PREFERED_DEVICE_KEY, device.getAddress());
+		prefEditor.commit();
+	}
 
 	/**
 	 * Touch listener to use for in-layout UI controls to delay hiding the

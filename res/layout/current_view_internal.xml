@@ -81,6 +81,17 @@
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:text="Azimuth" />
+
+    <TextView
+        android:id="@+id/azimuth"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right" />
+    
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:text="Distance" />
 
     <TextView
@@ -89,4 +100,25 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right" />
     
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="DeclTo" />
+
+    <TextView
+        android:id="@+id/declto"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Declination" />
+
+    <TextView
+        android:id="@+id/declination"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right" />
 </merge>

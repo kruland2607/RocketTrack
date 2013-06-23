@@ -23,6 +23,10 @@ public class CurrentInfoView extends LinearLayout {
 	
 	TextView bearing;
 	TextView distance;
+	TextView azimuth;
+	
+	TextView declto;
+	TextView decl;
 	
 	public CurrentInfoView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -54,6 +58,10 @@ public class CurrentInfoView extends LinearLayout {
 		
 		bearing = (TextView) findViewById(R.id.bearing);
 		distance = (TextView) findViewById(R.id.distance);
+		
+		azimuth = (TextView) findViewById(R.id.azimuth);
+		declto = (TextView) findViewById(R.id.declto);
+		decl = (TextView) findViewById(R.id.declination);
 		
 		updateFields();
 	}
@@ -87,6 +95,9 @@ public class CurrentInfoView extends LinearLayout {
 			bearing.setText( String.valueOf(handsetLoc.bearingTo(rocketPos)));
 			distance.setText( String.valueOf(handsetLoc.distanceTo(rocketPos)));
 		}
+		
+		azimuth.setText( String.valueOf( RocketTrackState.getInstance().getAzimuth()));
+		decl.setText( String.valueOf(RocketTrackState.getInstance().getDeclination()));
 	}
 	
 }

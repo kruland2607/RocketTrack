@@ -1,5 +1,7 @@
 package org.rockettrack;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -20,4 +22,16 @@ public class Utils {
 		alert.show();
 
 	}
+	
+	public static void createFolder(String folderName) {
+
+		File folder = new File(folderName);
+
+		// create output folder
+		if (!folder.exists()) {
+			folder.mkdir();
+		}
+
+	}
+
 }
