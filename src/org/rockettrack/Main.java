@@ -4,8 +4,6 @@ import org.rockettrack.service.AppService;
 import org.rockettrack.service.AppServiceConnection;
 import org.rockettrack.service.BroadcastIntents;
 import org.rockettrack.util.SystemUiHider;
-import org.taptwo.android.widget.CircleFlowIndicator;
-import org.taptwo.android.widget.ViewFlow;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -16,13 +14,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,7 +33,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -59,7 +59,7 @@ public class Main extends FragmentActivity {
 	// Intent request codes
 	private static final int REQUEST_CONNECT_DEVICE = 1;
 
-	private ViewFlow viewFlow;
+	private ViewPager viewFlow;
 
 
 	/**
@@ -192,11 +192,9 @@ public class Main extends FragmentActivity {
 			}
 		});
 
-		viewFlow = (ViewFlow) findViewById(R.id.viewflow);
+		viewFlow = (ViewPager) findViewById(R.id.viewflow);
 		viewFlow.setOnTouchListener(mDelayHideTouchListener);
-		viewFlow.setAdapter(new PageAdapter());
-		CircleFlowIndicator indic = (CircleFlowIndicator) findViewById(R.id.viewflowindic);
-		viewFlow.setFlowIndicator(indic);
+		viewFlow.setAdapter(new PageAdapter(getSupportFragmentManager()));
 
 	}
 
@@ -267,13 +265,6 @@ public class Main extends FragmentActivity {
 
 	}
 
-	/* If your min SDK version is < 8 you need to trigger the onConfigurationChanged in ViewFlow manually, like this */	
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		viewFlow.onConfigurationChanged(newConfig);
-	}
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
@@ -317,24 +308,33 @@ public class Main extends FragmentActivity {
 		serviceConnection.getService().connectToRocketTracker(device);
 	}
 
-	public class PageAdapter extends BaseAdapter {
+	public class PageAdapter extends FragmentPagerAdapter {
 
-		private LayoutInflater mInflater;
+		private final Fragment[] frags = new Fragment[2];
 
-		private final int[] ids = { R.layout.console_view, R.layout.current_view };
-
-		public PageAdapter() {
-			mInflater = (LayoutInflater) Main.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		public PageAdapter(FragmentManager fm) {
+			super(fm);
 		}
 
 		@Override
 		public int getCount() {
-			return ids.length;
+			return frags.length;
 		}
 
 		@Override
-		public Object getItem(int position) {
-			return position;
+		public Fragment getItem(int position) {
+			Fragment f = frags[position];
+			if ( f == null ) {
+				switch (position) {
+				case 0:
+					f = Fragment.instantiate(Main.this, "org.rockettrack.ConsoleOutputFragment");
+					break;
+				case 1:
+					f = Fragment.instantiate(Main.this, "org.rockettrack.CurrentInfoFragment");
+				}
+				frags[position] = f;
+			}
+			return f;
 		}
 
 		@Override
@@ -342,11 +342,6 @@ public class Main extends FragmentActivity {
 			return position;
 		}
 
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			return 
-					mInflater.inflate(ids[position], parent, false);
-		}
 	}
 
 	/**

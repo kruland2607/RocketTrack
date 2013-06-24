@@ -3,7 +3,6 @@ package org.rockettrack.views;
 import org.rockettrack.RocketTrackState;
 
 import android.content.Context;
-import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
@@ -17,19 +16,6 @@ public class ConsoleOutputView extends ImageView {
 	public ConsoleOutputView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		lineView = new TextView(context, attrs, defStyle);
-		RocketTrackState.getInstance().getRawDataAdapter().registerDataSetObserver( new DataSetObserver() {
-
-			@Override
-			public void onChanged() {
-				ConsoleOutputView.this.invalidate();
-			}
-
-			@Override
-			public void onInvalidated() {
-				ConsoleOutputView.this.invalidate();
-			}
-			
-		});
 	}
 
 	public ConsoleOutputView(Context context, AttributeSet attrs) {
