@@ -60,8 +60,6 @@ public class Main extends FragmentActivity {
 
 	private ViewPager viewFlow;
 
-	private GestureDetector autoHideGesture;
-
 	/**
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -150,30 +148,7 @@ public class Main extends FragmentActivity {
 			}
 		});
 
-		
-		autoHideGesture = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-			@Override
-			public boolean onDoubleTap(MotionEvent evt) {
-				if (TOGGLE_ON_CLICK) {
-					mSystemUiHider.toggle();
-				} else {
-					mSystemUiHider.show();
-				}
-				return true;
-			}
-		});
-		
 		// Set up the user interaction to manually show or hide the system UI.
-//		contentView.setOnClickListener(new View.OnClickListener() {
-//			@Override
-//			public void onClick(View view) {
-//				if (TOGGLE_ON_CLICK) {
-//					mSystemUiHider.toggle();
-//				} else {
-//					mSystemUiHider.show();
-//				}
-//			}
-//		});
 
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
@@ -214,7 +189,9 @@ public class Main extends FragmentActivity {
 		// Trigger the initial hide() shortly after the activity has been
 		// created, to briefly hint to the user that UI controls
 		// are available.
-		delayedHide(100);
+		if ( AUTO_HIDE ) {
+			delayedHide(100);
+		}
 	}
 
 	@Override
@@ -249,11 +226,6 @@ public class Main extends FragmentActivity {
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 	}
 
-	@Override
-	public boolean onTouchEvent( MotionEvent evt ) {
-		return autoHideGesture.onTouchEvent(evt);
-	}
-	
 	protected void connectOrSelectDevice() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		String prefered_device = prefs.getString(PREFERED_DEVICE_KEY, "");
