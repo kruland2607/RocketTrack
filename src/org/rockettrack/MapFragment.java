@@ -52,13 +52,13 @@ public class MapFragment extends Fragment {
 	private float rocketDistance = 0;
 	private Location rocketLocation;
 	private double maxAltitude;
-	
+
 	List<LatLng> rocketPosList;
-	
+
 	private Polyline rocketLine;
 	private Polyline rocketPath;
-	
-	
+
+
 	public MapFragment() {
 		super();
 		rocketPosList = new ArrayList<LatLng>();
@@ -67,14 +67,14 @@ public class MapFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.map_view, null, false);
-		
+
 		return v;
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		
+
 		mObserver = new DataSetObserver() {
 			@Override
 			public void onChanged() {
@@ -86,13 +86,13 @@ public class MapFragment extends Fragment {
 				MapFragment.this.refreshScreen();
 			}
 		};
-		
+
 		RocketTrackState.getInstance().getLocationDataAdapter().registerDataSetObserver(mObserver);
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
-		
+
 		setUpMapIfNeeded();
 	}
-	
+
 	@Override
 	public void onPause() {
 		super.onPause();
@@ -100,18 +100,22 @@ public class MapFragment extends Fragment {
 	}
 
 	@Override
-    public void onDestroyView() {
-        super.onDestroyView(); 
-        // Stackoverflow says this is necessary, but it seems to cause some troubles too.
-//        Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));  
-//        FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-//        ft.remove(fragment);
-//        ft.commit();
-}
+	public void onDestroyView() {
+		super.onDestroyView(); 
+		// Stackoverflow says this is necessary, but it seems to cause some troubles too.
+		// It basically causes the map to be recreated with the view.  Look into the xml configuration
+		// flags for the  SupportMapFragment object itself.
+		Fragment fragment = (getFragmentManager().findFragmentById(R.id.map));  
+		FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+		ft.remove(fragment);
+		ft.commit();
+		mMap = null;
+	}
+	
 	private void refreshScreen() {
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 		updateRocketLocation();		
-		
+
 	}
 
 	private void setUpMapIfNeeded() {
@@ -143,22 +147,22 @@ public class MapFragment extends Fragment {
 		UiSettings mUiSettings = mMap.getUiSettings();
 		mUiSettings.setCompassEnabled(true);
 		// mUiSettings.
-		
+
 	}
 
 	private void updateRocketLocation() {
 		if(rocketLocation == null)
 			return;
-		
+
 		LatLng rocketPosition = new LatLng(rocketLocation.getLatitude(), rocketLocation.getLongitude());
 		rocketPosList.add(rocketPosition);
-		
+
 		//Draw marker at Rocket position
 		if(rocketMarker == null)
 			rocketMarker = mMap.addMarker(new MarkerOptions().position(rocketPosition));
 		else
 			rocketMarker.setPosition(rocketPosition);
-		
+
 
 		Location myLoc = mMap.getMyLocation();
 		//myLoc = null when the android gps is not initialized yet.
@@ -171,7 +175,7 @@ public class MapFragment extends Fragment {
 		//update camera
 		float bearing = myLoc.bearingTo(rocketLocation);
 		CameraPosition camPos = new CameraPosition.Builder()
-				.target(rocketPosition).bearing(bearing).zoom(20).build();
+		.target(rocketPosition).bearing(bearing).zoom(20).build();
 		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
 
 
@@ -180,33 +184,33 @@ public class MapFragment extends Fragment {
 		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
 		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
 
-		
-		
+
+
 		//Max Altitude
 		double altitude = rocketLocation.getAltitude();// - myLoc.getAltitude();
 		if(altitude > maxAltitude)
 			maxAltitude = altitude;
 		TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.lblMaxAltitude);
 		lblMaxAltitude.setText("Max Altitude: " + maxAltitude + "m");
-		
+
 		//Draw line between myPosition and Rocket
 		LatLng myPosition = new LatLng(myLoc.getLatitude(),
 				myLoc.getLongitude());
 
-		
+
 		if (rocketPath == null) {
 			rocketPath = mMap.addPolyline(new PolylineOptions()
-					.add(rocketPosList.get(0))					
-					.width(1.0f)
-					.color(Color.rgb(0, 0, 128)));
+			.add(rocketPosList.get(0))					
+			.width(1.0f)
+			.color(Color.rgb(0, 0, 128)));
 		} 
 		rocketPath.setPoints(rocketPosList);
-		
+
 		if (rocketLine == null) {
 			rocketLine = mMap.addPolyline(new PolylineOptions()
-					.add(myPosition,rocketPosition)
-					.width(1.0f)
-					.color(Color.WHITE));
+			.add(myPosition,rocketPosition)
+			.width(1.0f)
+			.color(Color.WHITE));
 		} else {
 			List<LatLng> positionList = new ArrayList<LatLng>();
 			positionList.add(myPosition);
