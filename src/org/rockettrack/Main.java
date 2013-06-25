@@ -66,7 +66,7 @@ public class Main extends FragmentActivity {
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
 	 */
-	private static final boolean AUTO_HIDE = true;
+	private static final boolean AUTO_HIDE = false;
 
 	/**
 	 * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
