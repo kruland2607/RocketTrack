@@ -100,10 +100,6 @@ public class Main extends FragmentActivity {
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-		serviceConnection = new AppServiceConnection(this, appServiceConnectionCallback);
-		serviceConnection.startService();
-		serviceConnection.bindAppService();
-
 		setContentView(R.layout.activity_main);
 
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
@@ -225,7 +221,6 @@ public class Main extends FragmentActivity {
 	public void onResume() {
 		super.onResume();
 		Log.e(TAG, "++ ON RESUME ++");
-		serviceConnection.bindAppService();
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter(BroadcastIntents.BLUETOOTH_STATE_CHANGE));
 	}
 	
@@ -233,6 +228,9 @@ public class Main extends FragmentActivity {
 	public void onStart() {
 		super.onStart();
 		Log.e(TAG, "++ ON START ++");
+		serviceConnection = new AppServiceConnection(this, appServiceConnectionCallback);
+		serviceConnection.startService();
+		serviceConnection.bindAppService();
 	}
 
 	@Override
