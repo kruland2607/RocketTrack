@@ -6,6 +6,11 @@
     android:background="#0099cc"
     tools:context=".Main" >
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true" >
+
     <LinearLayout
         android:id="@+id/fullscreen_content"
         android:layout_width="fill_parent"
@@ -18,11 +23,6 @@
             app:sidebuffer="3" >
         </android.support.v4.view.ViewPager>
     </LinearLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true" >
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"

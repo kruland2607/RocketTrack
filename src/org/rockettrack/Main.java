@@ -25,14 +25,13 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.LayoutInflater;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -61,6 +60,7 @@ public class Main extends FragmentActivity {
 
 	private ViewPager viewFlow;
 
+	private GestureDetector autoHideGesture;
 
 	/**
 	 * Whether or not the system UI should be auto-hidden after
@@ -154,17 +154,30 @@ public class Main extends FragmentActivity {
 			}
 		});
 
-		// Set up the user interaction to manually show or hide the system UI.
-		contentView.setOnClickListener(new View.OnClickListener() {
+		
+		autoHideGesture = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
 			@Override
-			public void onClick(View view) {
+			public boolean onDoubleTap(MotionEvent evt) {
 				if (TOGGLE_ON_CLICK) {
 					mSystemUiHider.toggle();
 				} else {
 					mSystemUiHider.show();
 				}
+				return true;
 			}
 		});
+		
+		// Set up the user interaction to manually show or hide the system UI.
+//		contentView.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View view) {
+//				if (TOGGLE_ON_CLICK) {
+//					mSystemUiHider.toggle();
+//				} else {
+//					mSystemUiHider.show();
+//				}
+//			}
+//		});
 
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
@@ -236,6 +249,11 @@ public class Main extends FragmentActivity {
 		super.onPause();
 		Log.e(TAG, "++ ON START ++");
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+	}
+
+	@Override
+	public boolean onTouchEvent( MotionEvent evt ) {
+		return autoHideGesture.onTouchEvent(evt);
 	}
 	
 	protected void connectOrSelectDevice() {
@@ -310,7 +328,7 @@ public class Main extends FragmentActivity {
 
 	public class PageAdapter extends FragmentPagerAdapter {
 
-		private final Fragment[] frags = new Fragment[2];
+		private final Fragment[] frags = new Fragment[3];
 
 		public PageAdapter(FragmentManager fm) {
 			super(fm);
@@ -331,6 +349,10 @@ public class Main extends FragmentActivity {
 					break;
 				case 1:
 					f = Fragment.instantiate(Main.this, "org.rockettrack.CurrentInfoFragment");
+					break;
+				case 2:
+					f = Fragment.instantiate(Main.this,  "org.rockettrack.MapFragment");
+					break;
 				}
 				frags[position] = f;
 			}
