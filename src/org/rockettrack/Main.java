@@ -153,29 +153,6 @@ public class Main extends FragmentActivity {
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
-		findViewById(R.id.stop_button).setOnTouchListener(mDelayHideTouchListener);
-
-		((Button) findViewById(R.id.stop_button)).setOnClickListener( new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				Main.this.onDoStop();
-
-			}
-
-		});
-
-		findViewById(R.id.conect_button).setOnTouchListener(mDelayHideTouchListener);
-		((Button) findViewById(R.id.conect_button)).setOnClickListener( new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
-				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-
-			}
-		});
-
 		viewFlow = (ViewPager) findViewById(R.id.viewflow);
 		viewFlow.setOnTouchListener(mDelayHideTouchListener);
 		viewFlow.setAdapter(new PageAdapter(getSupportFragmentManager()));
@@ -247,12 +224,16 @@ public class Main extends FragmentActivity {
 		prefEditor.commit();
 
 		// Ask the user to choose a new one.
-		Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
-		serverIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
-		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+		selectDevice();
 
 	}
 
+	private void selectDevice() {
+		Intent serverIntent = new Intent(Main.this, DeviceListActivity.class);
+		serverIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
@@ -263,6 +244,12 @@ public class Main extends FragmentActivity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+		case R.id.connect_scan:
+			// Launch the DeviceListActivity to see devices and do scan
+			selectDevice();
+			return true;
+		case R.id.save_recording:
+			return true;
 		}
 		return false;
 	}
@@ -278,7 +265,9 @@ public class Main extends FragmentActivity {
 				String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
 				connectDevice(address);
 			}
-			delayedHide(AUTO_HIDE_DELAY_MILLIS);
+			if (AUTO_HIDE) {
+				delayedHide(AUTO_HIDE_DELAY_MILLIS);
+			}
 			break;
 		}
 	}
