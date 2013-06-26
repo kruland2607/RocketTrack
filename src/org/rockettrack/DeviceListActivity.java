@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// This source taken from AltosDroid project and adapted.
 
 package org.rockettrack;
 
 import java.util.Set;
+import java.util.UUID;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -26,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -44,6 +47,9 @@ import android.widget.TextView;
  * Activity in the result Intent.
  */
 public class DeviceListActivity extends Activity {
+	
+	private final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
 	// Debugging
 	private static final String TAG = "DeviceListActivity";
 	private static final boolean D = true;
@@ -109,13 +115,30 @@ public class DeviceListActivity extends Activity {
 		if (pairedDevices.size() > 0) {
 			findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 			for (BluetoothDevice device : pairedDevices)
-//				if (device.getName().startsWith("TeleBT"))
+				if ( isSPPDevice( device ) ) {
 					mPairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+				}
 
 		} else {
 			String noDevices = getResources().getText(R.string.none_paired).toString();
 			mPairedDevicesArrayAdapter.add(noDevices);
 		}
+	}
+	
+	private boolean isSPPDevice( BluetoothDevice device ) {
+		
+		ParcelUuid[] supportedFunctions = device.getUuids();
+		if ( supportedFunctions == null || supportedFunctions.length == 0 ) {
+			// If the device doesn't say what it is, then include it.
+			return true;
+		}
+		for( ParcelUuid f : supportedFunctions ) {
+				if ( f.getUuid().equals(SPP_UUID ) ) {
+					return true;
+				}
+		}
+		return false;
+		
 	}
 
 	@Override
@@ -189,8 +212,7 @@ public class DeviceListActivity extends Activity {
 				// Get the BluetoothDevice object from the Intent
 				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				// If it's already paired, skip it, because it's been listed already
-				if (   device.getBondState() != BluetoothDevice.BOND_BONDED
-				    /*&& device.getName().startsWith("TeleBT")*/               ) {
+				if (   device.getBondState() != BluetoothDevice.BOND_BONDED && isSPPDevice(device)  ) {
 					mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 				}
 			// When discovery is finished, change the Activity title
