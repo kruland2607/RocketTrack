@@ -25,14 +25,11 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.Toast;
 
 /**
@@ -175,6 +172,7 @@ public class Main extends FragmentActivity {
 	public void onResume() {
 		super.onResume();
 		Log.e(TAG, "++ ON RESUME ++");
+		Sounds.init(this);
 		LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter(BroadcastIntents.BLUETOOTH_STATE_CHANGE));
 	}
 	
@@ -200,6 +198,7 @@ public class Main extends FragmentActivity {
 	public void onPause() {
 		super.onPause();
 		Log.e(TAG, "++ ON START ++");
+		Sounds.release();
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 	}
 

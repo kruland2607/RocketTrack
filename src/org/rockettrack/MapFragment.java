@@ -21,8 +21,14 @@ package org.rockettrack;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Color;
+import android.hardware.GeomagneticField;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -31,32 +37,48 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class MapFragment extends Fragment {
+public class MapFragment extends Fragment  implements OnMyLocationChangeListener {
 
+	// Listeners
 	private DataSetObserver mObserver = null;
-
+	private SensorEventListener magnetlistener = null;
+	
+	// Map reference
 	private GoogleMap mMap;
+	
+	// Map markers
 	private Marker rocketMarker;
+	private Circle rocketCircle;
+	private Polyline rocketLine;
+	private Polyline rocketPath;
+
+	// Data
 	private float rocketDistance = 0;
 	private Location rocketLocation;
 	private double maxAltitude;
 
 	List<LatLng> rocketPosList;
 
-	private Polyline rocketLine;
-	private Polyline rocketPath;
+	protected int myAzimuth;
+	LatLng myPosition;
+	private GeomagneticField geoField;
+	public long radarDelay;
 
 
 	public MapFragment() {
@@ -90,13 +112,26 @@ public class MapFragment extends Fragment {
 		RocketTrackState.getInstance().getLocationDataAdapter().registerDataSetObserver(mObserver);
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 
+		initCompass();
+
 		setUpMapIfNeeded();
+		
+		radarDelay = -1;
+		radarBeepThread radarBeep = new radarBeepThread();
+		radarBeep.start();
+
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
 		RocketTrackState.getInstance().getLocationDataAdapter().unregisterDataSetObserver(mObserver);
+		
+		SensorManager sman = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+		@SuppressWarnings("deprecation")
+		Sensor magnetfield = sman.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		sman.unregisterListener(magnetlistener, magnetfield);
+
 	}
 
 	@Override
@@ -110,6 +145,35 @@ public class MapFragment extends Fragment {
 		ft.remove(fragment);
 		ft.commit();
 		mMap = null;
+	}
+	
+
+	@Override
+	public void onMyLocationChange(Location location) {
+		if(mMap == null || mMap.getMyLocation() == null)
+			return;
+		
+		geoField = new GeomagneticField(
+		         Double.valueOf(location.getLatitude()).floatValue(),
+		         Double.valueOf(location.getLongitude()).floatValue(),
+		         Double.valueOf(location.getAltitude()).floatValue(),
+		         System.currentTimeMillis()
+		      );		
+		myPosition = new LatLng(location.getLatitude(),
+				location.getLongitude());
+
+		if(rocketPosList.size() > 0){
+			LatLng rocketPosition = rocketPosList.get(rocketPosList.size() -1);
+			updateRocketLine(rocketPosition);
+		}
+		
+		ToggleButton chkFollowMe = (ToggleButton) getView().findViewById(R.id.chkFollowMe);
+		
+		if(chkFollowMe.isChecked()){				
+			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
+			.target(myPosition).build();
+			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));		
+		}
 	}
 	
 	private void refreshScreen() {
@@ -137,6 +201,7 @@ public class MapFragment extends Fragment {
 
 		mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		mMap.setMyLocationEnabled(true);
+		mMap.setOnMyLocationChangeListener(this);
 		if(rocketLocation != null)
 			updateRocketLocation();		
 		/*
@@ -149,6 +214,72 @@ public class MapFragment extends Fragment {
 		// mUiSettings.
 
 	}
+	
+	private void initCompass() {
+		SensorManager sman = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+		@SuppressWarnings("deprecation")
+		Sensor magnetfield = sman.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		magnetlistener = new SensorEventListener() {
+			
+			@Override
+			public void onSensorChanged(SensorEvent arg0) {
+				ToggleButton chkRocketCompass = (ToggleButton) getView().findViewById(R.id.chkRocketCompass);
+				
+				if(!chkRocketCompass.isChecked())
+					return;
+				myAzimuth = Math.round(arg0.values[0]);
+				
+				float heading;
+				if(rocketLocation == null){
+					if(geoField == null)
+						heading = myAzimuth;
+					else
+						heading = myAzimuth + geoField.getDeclination();
+				}
+				else{
+					float rocketBearing = normalizeDegree(mMap.getMyLocation().bearingTo(rocketLocation));
+					rocketBearing += geoField.getDeclination();
+					float deltaBearing = (rocketBearing - myAzimuth) *-1;
+					heading =  rocketBearing + deltaBearing;		
+
+					float delta2 = deltaBearing + geoField.getDeclination();
+					radarDelay = getRadarDelay(delta2);
+					
+					TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
+					lblBearing.setText("Bearing: " + getRadarDelay(delta2) / 10);
+					
+				}
+				CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
+				.bearing(heading).build();
+				mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
+
+			}
+
+			@Override
+			public void onAccuracyChanged(Sensor sensor, int accuracy) {
+			}
+		};
+
+		// Finally, register your listener
+		sman.registerListener(magnetlistener, magnetfield,SensorManager.SENSOR_DELAY_NORMAL);
+	}
+
+	private float normalizeDegree(float value){
+        if(value >= 0.0f && value <= 180.0f){
+            return value;
+        }else{
+            return 180 + (180 + value);
+        }	
+	}
+	
+	private long getRadarDelay(float value){
+		long ret = (long) Math.abs(value);
+		if(ret > 180)
+			ret = (long) (360 - ret);
+		return ret * 10 + 20;
+	}
+
+
 
 	private void updateRocketLocation() {
 		if(rocketLocation == null)
@@ -162,7 +293,13 @@ public class MapFragment extends Fragment {
 			rocketMarker = mMap.addMarker(new MarkerOptions().position(rocketPosition));
 		else
 			rocketMarker.setPosition(rocketPosition);
-
+		if ( rocketCircle == null ) {
+			CircleOptions options = new CircleOptions().center( rocketPosition ).radius( rocketLocation.getAccuracy() );
+			rocketCircle = mMap.addCircle(options);
+		} else {
+			rocketCircle.setCenter(rocketPosition);
+			rocketCircle.setRadius( rocketLocation.getAccuracy() );
+		}
 
 		Location myLoc = mMap.getMyLocation();
 		//myLoc = null when the android gps is not initialized yet.
@@ -184,8 +321,6 @@ public class MapFragment extends Fragment {
 		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
 		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
 
-
-
 		//Max Altitude
 		double altitude = rocketLocation.getAltitude();// - myLoc.getAltitude();
 		if(altitude > maxAltitude)
@@ -194,17 +329,28 @@ public class MapFragment extends Fragment {
 		lblMaxAltitude.setText("Max Altitude: " + maxAltitude + "m");
 
 		//Draw line between myPosition and Rocket
-		LatLng myPosition = new LatLng(myLoc.getLatitude(),
-				myLoc.getLongitude());
-
+		LatLng myPosition = new LatLng(myLoc.getLatitude(),myLoc.getLongitude());
 
 		if (rocketPath == null) {
 			rocketPath = mMap.addPolyline(new PolylineOptions()
-			.add(rocketPosList.get(0))					
+			.add(rocketPosList.get(0))
 			.width(1.0f)
 			.color(Color.rgb(0, 0, 128)));
 		} 
 		rocketPath.setPoints(rocketPosList);
+
+		updateRocketLine(rocketPosition);
+	}
+
+	private void updateRocketLine(LatLng rocketPosition) {
+		if(myPosition == null || rocketPosition == null)
+			return;
+		//Rocket Distance
+		rocketDistance = mMap.getMyLocation().distanceTo(rocketLocation);
+		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
+		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
+
+		//Draw line between myPosition and Rocket
 
 		if (rocketLine == null) {
 			rocketLine = mMap.addPolyline(new PolylineOptions()
@@ -217,6 +363,23 @@ public class MapFragment extends Fragment {
 			positionList.add(rocketPosition);
 			rocketLine.setPoints(positionList);
 		}
+	}
+
+	private class radarBeepThread extends Thread{
+		public void run() {
+			while(true){
+				try {
+					if(radarDelay < 0)
+						Thread.sleep(100);
+					else
+						Thread.sleep(radarDelay);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if(radarDelay > 0)
+					Sounds.radar_beep.start();
+			}
+		}		
 	}
 
 }
