@@ -43,6 +43,16 @@ public class Parser {
 					l.setLongitude(d);
 				}
 			}
+			{
+				// Set accuracy to 30m because it's a number.
+				l.setAccuracy(30f);
+				try {
+					Float d = Float.parseFloat( hdopString );
+					l.setAccuracy(d * 10f);
+					// Read: http://www.edu-observatory.org/gps/gps_accuracy.html 
+				} catch ( NumberFormatException ex ) {
+				}
+			}
 			
 			return l;
 		} else {
