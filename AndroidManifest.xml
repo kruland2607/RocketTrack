@@ -61,12 +61,15 @@
             android:theme="@style/FullscreenTheme" >
         </activity>
         <activity
+            android:name=".Preferences"
+            android:theme="@android:style/Theme.Dialog"/>
+        
+        <activity
             android:name=".DeviceListActivity"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/select_device"
             android:theme="@android:style/Theme.Dialog" />
 
-        <service android:name="org.rockettrack.service.RocketLocationService" />
         <service
             android:name=".service.AppService"
             android:enabled="true"

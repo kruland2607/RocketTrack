@@ -18,10 +18,21 @@
     <!-- Options Menu -->
     <string name="connect_device">Connect a device</string>
     <string name="save_recording">Save Recording</string>
+    <string name="menu_preferences">Preferences</string>
+    
 
     <!-- Service -->
     <string name="telemetry_service_label">RocketTrack Telemetry Service</string>
     <string name="telemetry_service_started">Telemetry Service Started</string>
     <string name="telemetry_service_stopped">Telemetry Service Stopped</string>
+
+    <!-- Preferences -->
+    <string name="prefcat_units">Units</string>
+    <string name="prefcat_misc">Misc</string>
+    <string name="pref_keep_screen_on">Keep screen on</string>
+    <string name="pref_keep_screen_on_summary">Disables screen saver</string>
+    <string name="pref_unit_description">Select metric or US settings</string>
+    <string name="pref_distance">Distance</string>
+    <string name="pref_altitude">Altitude</string>
 
 </resources>

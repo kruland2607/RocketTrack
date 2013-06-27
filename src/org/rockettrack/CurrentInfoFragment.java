@@ -1,7 +1,5 @@
 package org.rockettrack;
 
-import org.rockettrack.views.ConsoleOutputView;
-
 import android.database.DataSetObserver;
 import android.location.Location;
 import android.os.Bundle;

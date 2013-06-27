@@ -249,6 +249,9 @@ public class Main extends FragmentActivity {
 			return true;
 		case R.id.save_recording:
 			return true;
+		case R.id.menu_preferences:
+			Intent i = new Intent(this,Preferences.class);
+			startActivity(i);
 		}
 		return false;
 	}
@@ -286,7 +289,7 @@ public class Main extends FragmentActivity {
 
 	public class PageAdapter extends FragmentPagerAdapter {
 
-		private final Fragment[] frags = new Fragment[3];
+		private final Fragment[] frags = new Fragment[4];
 
 		public PageAdapter(FragmentManager fm) {
 			super(fm);
@@ -307,6 +310,9 @@ public class Main extends FragmentActivity {
 					break;
 				case 1:
 					f = Fragment.instantiate(Main.this, "org.rockettrack.CurrentInfoFragment");
+					break;
+				case 3:
+					f = Fragment.instantiate(Main.this, "org.rockettrack.CompassNaviFragment");
 					break;
 				case 2:
 					f = Fragment.instantiate(Main.this,  "org.rockettrack.MapFragment");

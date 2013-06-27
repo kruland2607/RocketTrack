@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="bearingItems">
+        <item>Compass</item>
+        <item>GPS</item>
+    </string-array>
+    <string-array name="bearingValues">
+        <item>Compass</item>
+        <item>GPS</item>
+    </string-array>
+    <string-array name="unitItems">
+        <item>Metric (km/m)</item>
+        <item>US (feet)</item>
+    </string-array>
+    <string-array name="unitValues">
+        <item>Metric</item>
+        <item>US</item>
+    </string-array>
+
+</resources>
