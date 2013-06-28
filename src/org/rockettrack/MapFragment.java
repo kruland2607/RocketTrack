@@ -78,7 +78,6 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 	protected int myAzimuth;
 	LatLng myPosition;
 	private GeomagneticField geoField;
-	public long radarDelay;
 
 
 	public MapFragment() {
@@ -116,12 +115,6 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 
 		setUpMapIfNeeded();
 		
-		radarDelay = -1;
-		
-		// This isn't the best way to handle this.
-		//radarBeepThread radarBeep = new radarBeepThread();
-		//radarBeep.start();
-
 	}
 
 	@Override
@@ -225,10 +218,7 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 			
 			@Override
 			public void onSensorChanged(SensorEvent arg0) {
-				ToggleButton chkRocketCompass = (ToggleButton) getView().findViewById(R.id.chkRocketCompass);
 				
-				if(!chkRocketCompass.isChecked())
-					return;
 				myAzimuth = Math.round(arg0.values[0]);
 				
 				float heading = myAzimuth;
@@ -242,10 +232,9 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 						heading =  rocketBearing + deltaBearing;		
 
 						float delta2 = deltaBearing + geoField.getDeclination();
-						radarDelay = getRadarDelay(delta2);
 						
 						TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
-						lblBearing.setText("Bearing: " + getRadarDelay(delta2) / 10);
+						lblBearing.setText("Bearing: " + delta2 );
 						
 					}
 				}
@@ -271,14 +260,6 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
         }	
 	}
 	
-	private long getRadarDelay(float value){
-		long ret = (long) Math.abs(value);
-		if(ret > 180)
-			ret = (long) (360 - ret);
-		return ret * 10 + 20;
-	}
-
-
 
 	private void updateRocketLocation() {
 		if(rocketLocation == null)
@@ -310,9 +291,8 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 
 		//update camera
 		float bearing = myLoc.bearingTo(rocketLocation);
-		CameraPosition camPos = new CameraPosition.Builder()
-		.target(rocketPosition).bearing(bearing).zoom(20).build();
-		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+		CameraPosition camPos = new CameraPosition.Builder().target(rocketPosition).bearing(bearing).zoom(20).build();
+		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos),100, null);
 
 
 		//Rocket Distance
@@ -362,24 +342,6 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 			positionList.add(rocketPosition);
 			rocketLine.setPoints(positionList);
 		}
-	}
-
-	// FIXME - worry about media and thread management.
-	private class radarBeepThread extends Thread{
-		public void run() {
-			while(true){
-				try {
-					if(radarDelay < 0)
-						Thread.sleep(100);
-					else
-						Thread.sleep(radarDelay);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				if(radarDelay > 0)
-					Sounds.radar_beep.start();
-			}
-		}		
 	}
 
 }
