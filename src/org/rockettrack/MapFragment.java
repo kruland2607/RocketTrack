@@ -117,8 +117,10 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 		setUpMapIfNeeded();
 		
 		radarDelay = -1;
-		radarBeepThread radarBeep = new radarBeepThread();
-		radarBeep.start();
+		
+		// This isn't the best way to handle this.
+		//radarBeepThread radarBeep = new radarBeepThread();
+		//radarBeep.start();
 
 	}
 
@@ -229,28 +231,25 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 					return;
 				myAzimuth = Math.round(arg0.values[0]);
 				
-				float heading;
-				if(rocketLocation == null){
-					if(geoField == null)
-						heading = myAzimuth;
-					else
+				float heading = myAzimuth;
+				if ( geoField !=null ) {
+					if (rocketLocation == null ) {
 						heading = myAzimuth + geoField.getDeclination();
-				}
-				else{
-					float rocketBearing = normalizeDegree(mMap.getMyLocation().bearingTo(rocketLocation));
-					rocketBearing += geoField.getDeclination();
-					float deltaBearing = (rocketBearing - myAzimuth) *-1;
-					heading =  rocketBearing + deltaBearing;		
+					} else {
+						float rocketBearing = normalizeDegree(mMap.getMyLocation().bearingTo(rocketLocation));
+						rocketBearing += geoField.getDeclination();
+						float deltaBearing = (rocketBearing - myAzimuth) *-1;
+						heading =  rocketBearing + deltaBearing;		
 
-					float delta2 = deltaBearing + geoField.getDeclination();
-					radarDelay = getRadarDelay(delta2);
-					
-					TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
-					lblBearing.setText("Bearing: " + getRadarDelay(delta2) / 10);
-					
+						float delta2 = deltaBearing + geoField.getDeclination();
+						radarDelay = getRadarDelay(delta2);
+						
+						TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
+						lblBearing.setText("Bearing: " + getRadarDelay(delta2) / 10);
+						
+					}
 				}
-				CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
-				.bearing(heading).build();
+				CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).bearing(heading).build();
 				mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 
 			}
@@ -365,6 +364,7 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 		}
 	}
 
+	// FIXME - worry about media and thread management.
 	private class radarBeepThread extends Thread{
 		public void run() {
 			while(true){
