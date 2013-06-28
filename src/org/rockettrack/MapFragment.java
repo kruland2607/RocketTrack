@@ -36,6 +36,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -58,10 +60,10 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 	// Listeners
 	private DataSetObserver mObserver = null;
 	private SensorEventListener magnetlistener = null;
-	
+
 	// Map reference
 	private GoogleMap mMap;
-	
+
 	// Map markers
 	private Marker rocketMarker;
 	private Circle rocketCircle;
@@ -73,12 +75,13 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 	private Location rocketLocation;
 	private double maxAltitude;
 
-	List<LatLng> rocketPosList;
+	private List<LatLng> rocketPosList;
 
 	protected int myAzimuth;
-	LatLng myPosition;
+	private LatLng myPosition;
 	private GeomagneticField geoField;
 
+	private boolean followMe = false;
 
 	public MapFragment() {
 		super();
@@ -88,6 +91,17 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.map_view, null, false);
+
+		ToggleButton chkFollowMe = (ToggleButton) v.findViewById(R.id.chkFollowMe);
+		followMe = chkFollowMe.isChecked();
+		chkFollowMe.setOnCheckedChangeListener( new OnCheckedChangeListener() {
+
+			@Override
+			public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+				followMe = arg1;
+			}
+
+		});
 
 		return v;
 	}
@@ -114,14 +128,14 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 		initCompass();
 
 		setUpMapIfNeeded();
-		
+
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
 		RocketTrackState.getInstance().getLocationDataAdapter().unregisterDataSetObserver(mObserver);
-		
+
 		SensorManager sman = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
 		@SuppressWarnings("deprecation")
 		Sensor magnetfield = sman.getDefaultSensor(Sensor.TYPE_ORIENTATION);
@@ -141,36 +155,33 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 		ft.commit();
 		mMap = null;
 	}
-	
+
 
 	@Override
 	public void onMyLocationChange(Location location) {
 		if(mMap == null || mMap.getMyLocation() == null)
 			return;
-		
+
 		geoField = new GeomagneticField(
-		         Double.valueOf(location.getLatitude()).floatValue(),
-		         Double.valueOf(location.getLongitude()).floatValue(),
-		         Double.valueOf(location.getAltitude()).floatValue(),
-		         System.currentTimeMillis()
-		      );		
-		myPosition = new LatLng(location.getLatitude(),
-				location.getLongitude());
+				Double.valueOf(location.getLatitude()).floatValue(),
+				Double.valueOf(location.getLongitude()).floatValue(),
+				Double.valueOf(location.getAltitude()).floatValue(),
+				System.currentTimeMillis()
+				);		
+		myPosition = new LatLng(location.getLatitude(),location.getLongitude());
 
 		if(rocketPosList.size() > 0){
 			LatLng rocketPosition = rocketPosList.get(rocketPosList.size() -1);
 			updateRocketLine(rocketPosition);
 		}
-		
-		ToggleButton chkFollowMe = (ToggleButton) getView().findViewById(R.id.chkFollowMe);
-		
-		if(chkFollowMe.isChecked()){				
-			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition())
-			.target(myPosition).build();
-			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));		
+
+
+		if( followMe ) {
+			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).target(myPosition).build();
+			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 		}
 	}
-	
+
 	private void refreshScreen() {
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 		updateRocketLocation();		
@@ -197,30 +208,27 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 		mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		mMap.setMyLocationEnabled(true);
 		mMap.setOnMyLocationChangeListener(this);
-		if(rocketLocation != null)
-			updateRocketLocation();		
-		/*
-		 * mMap.moveCamera( CameraUpdateFactory.newCameraPosition(new
-		 * CameraPosition());//.newLatLngZoom(new
-		 * LatLng(myLoc.getLatitude(),myLoc.getLongitude()), 10));
-		 */
+		if(rocketLocation != null) {
+			updateRocketLocation();
+		}
 		UiSettings mUiSettings = mMap.getUiSettings();
 		mUiSettings.setCompassEnabled(true);
-		// mUiSettings.
+		mUiSettings.setMyLocationButtonEnabled(false);
+		mUiSettings.setZoomControlsEnabled(false);
 
 	}
-	
+
 	private void initCompass() {
 		SensorManager sman = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
 		@SuppressWarnings("deprecation")
 		Sensor magnetfield = sman.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 		magnetlistener = new SensorEventListener() {
-			
+
 			@Override
 			public void onSensorChanged(SensorEvent arg0) {
-				
+
 				myAzimuth = Math.round(arg0.values[0]);
-				
+
 				float heading = myAzimuth;
 				if ( geoField !=null ) {
 					if (rocketLocation == null ) {
@@ -232,14 +240,16 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 						heading =  rocketBearing + deltaBearing;		
 
 						float delta2 = deltaBearing + geoField.getDeclination();
-						
+
 						TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
 						lblBearing.setText("Bearing: " + delta2 );
-						
+
 					}
 				}
-				CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).bearing(heading).build();
-				mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
+				if ( followMe ) {
+					CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).bearing(heading).zoom(20).build();
+					mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
+				}
 
 			}
 
@@ -253,13 +263,13 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 	}
 
 	private float normalizeDegree(float value){
-        if(value >= 0.0f && value <= 180.0f){
-            return value;
-        }else{
-            return 180 + (180 + value);
-        }	
+		if(value >= 0.0f && value <= 180.0f){
+			return value;
+		}else{
+			return 180 + (180 + value);
+		}	
 	}
-	
+
 
 	private void updateRocketLocation() {
 		if(rocketLocation == null)
@@ -291,8 +301,8 @@ public class MapFragment extends Fragment  implements OnMyLocationChangeListener
 
 		//update camera
 		float bearing = myLoc.bearingTo(rocketLocation);
-		CameraPosition camPos = new CameraPosition.Builder().target(rocketPosition).bearing(bearing).zoom(20).build();
-		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos),100, null);
+		//		CameraPosition camPos = new CameraPosition.Builder().target(rocketPosition).bearing(bearing).zoom(20).build();
+		//		mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos),100, null);
 
 
 		//Rocket Distance
