@@ -31,6 +31,8 @@ import android.view.View;
  */
 public class CompassNaviView extends View 
 {
+	
+	private final static String TAG = "CompassNaviView";
 
 	// Various paints
 	private Paint mNorthPaint;
@@ -387,7 +389,7 @@ public class CompassNaviView extends View
 		canvas.drawCircle(this.mCompassLayout.CompassCenterX, this.mCompassLayout.CompassCenterY, 4 * this.mDisplayScaledDensity, this.mCenterPaint);
 
 		// Draw arrow pointing to the destination
-		if (this.mCurrentLocation != null)
+		if (this.mCurrentLocation != null && this.mTarget != null)
 		{
 			final float fltBearing = this.mCurrentLocation.bearingTo(this.mTarget);
 			final float fltDistance = this.mCurrentLocation.distanceTo(this.mTarget);
@@ -442,6 +444,9 @@ public class CompassNaviView extends View
 	 */
 	private void drawTargetInformation(Canvas canvas)
 	{
+		if ( this.mTarget == null ) {
+			return;
+		}
 		final int intWidth = this.getWidth();		
 		final CoordinateHelper coordinateHelper = new CoordinateHelper(this.mTarget.getLatitude(), this.mTarget.getLongitude());
 

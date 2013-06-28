@@ -3,7 +3,6 @@ package org.rockettrack;
 import org.rockettrack.data.GravityMovingAverage;
 import org.rockettrack.util.Unit;
 import org.rockettrack.views.CompassNaviView;
-import org.rockettrack.views.CoordinateHelper;
 import org.rockettrack.views.NavigationTarget;
 
 import android.app.Activity;
@@ -23,6 +22,7 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +35,7 @@ import android.widget.Toast;
  */
 public class CompassNaviFragment extends Fragment implements SensorEventListener, LocationListener, GpsStatus.Listener
 {
+	private final static String TAG = "CompassNaviFragment";
 
 	private DataSetObserver mObserver = null;
 
@@ -235,6 +236,9 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	 */
 	private void setNavigationTarget(String name, Location l)
 	{
+		if ( l == null ) {
+			return;
+		}
 		this.mNavigationTarget.setName(name);
 		this.mNavigationTarget.setLatitude(l.getLatitude());
 		this.mNavigationTarget.setLongitude(l.getLongitude());
@@ -366,6 +370,7 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 			break;
 		}
 
+		Log.d(TAG, "Gravity = " + String.valueOf(gravity));
 		// If gravity and geomag have values then find rotation matrix
 		if (gravity != null && geomag != null) 
 		{
@@ -376,6 +381,9 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 				SensorManager.getOrientation(inR, orientVals);
 				azimuth = Math.toDegrees(orientVals[0]);
 				azimuth = (azimuth + 360) % 360;
+				
+				Log.d(TAG, "Azimuth = " + azimuth);
+				
 				// pitch = Math.toDegrees(orientVals[1]);
 				// roll = Math.toDegrees(orientVals[2]);
 
