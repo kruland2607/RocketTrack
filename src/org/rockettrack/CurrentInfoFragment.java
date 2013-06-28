@@ -89,7 +89,7 @@ public class CurrentInfoFragment extends Fragment {
 			rocketLat.setText( String.valueOf(rocketPos.getLatitude() ));
 		}
 		
-		Location handsetLoc = RocketTrackState.getInstance().getLocationDataAdapter().getMyLocation();
+		Location handsetLoc = null;// RocketTrackState.getInstance().getLocationDataAdapter().getMyLocation();
 		if ( handsetLoc != null ) {
 			myAlt.setText( String.valueOf(handsetLoc.getAltitude()));
 			myLon.setText( String.valueOf(handsetLoc.getLongitude()));

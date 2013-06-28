@@ -40,7 +40,6 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	private DataSetObserver mObserver = null;
 
 	private SensorManager mSensorManager;
-	private Sensor mSensorAccelerometer;
 	private Sensor mSensorMagneticField;
 	private LocationManager mLocationManager;
 	private CompassNaviView mCompassNaviView;
@@ -93,7 +92,6 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 		this.mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-		this.mSensorAccelerometer = this.mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 		this.mSensorMagneticField = this.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		this.mLocationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
 
@@ -125,8 +123,7 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 		this.mGravityMovingAverage.setWindowSize(intWindowSize);
 		this.mGravityMovingAverage.setUseWeightedAverage(this.mSharedPreferences.getBoolean(PREFS_KEY_USE_WEIGHTED_AVG, PREFS_DEFAULT_USE_WEIGHTED_AVG));
 
-		this.mSensorManager.registerListener(this, this.mSensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-		this.mSensorManager.registerListener(this, this.mSensorMagneticField, SensorManager.SENSOR_DELAY_NORMAL);
+		this.mSensorManager.registerListener(this, this.mSensorMagneticField, SensorManager.SENSOR_DELAY_UI);
 
 		// Location (GPS)
 		this.mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, intMinTime, fltMinDistance, this);
@@ -178,7 +175,6 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	{
 		super.onPause();
 
-		this.mSensorManager.unregisterListener(this, this.mSensorAccelerometer);
 		this.mSensorManager.unregisterListener(this, this.mSensorMagneticField);
 		this.mLocationManager.removeGpsStatusListener(this);
 		this.mLocationManager.removeUpdates(this);

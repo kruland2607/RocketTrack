@@ -6,8 +6,8 @@ import java.util.LinkedList;
 public class GravityMovingAverage 
 {
 	private LinkedList<float[]> mValues = new LinkedList<float[]>();
-	private int mWindowSize = 5;
-	private boolean mUseWeightedAverage = true;
+	private int mWindowSize = 10;
+	private boolean mUseWeightedAverage = false;
 
 	/**
 	 * 

@@ -51,11 +51,6 @@ public class AppService extends Service {
 	private LocationManager locationManager;
 
 	/**
-	 * current device location
-	 */
-	private Location currentLocation;
-
-	/**
 	 * is GPS in use?
 	 */
 	private boolean gpsInUse;
@@ -89,59 +84,6 @@ public class AppService extends Service {
 	public boolean isListening() {
 		return listening;
 	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public Location getCurrentLocation() {
-		return this.currentLocation;
-	}
-
-
-	/**
-	 * Defines a listener that responds to location updates
-	 */
-	private LocationListener locationListener = new LocationListener() {
-
-		/**
-		 * Called when a new location is found by the network location provider.
-		 */
-		@Override
-		public void onLocationChanged(Location location) {
-
-			listening = true;
-
-			currentLocation = location;
-
-			RocketTrackState.getInstance().getLocationDataAdapter().setMyLocation(location);
-
-			// activities with registered receivers will get location updates
-			broadcastLocationUpdate(location, BroadcastIntents.LOCATION_UPDATE);
-
-		}
-
-		/**
-		 * Called when the provider status changes. This method is called when a
-		 * provider is unable to fetch a location or if the provider has
-		 * recently become available after a period of unavailability.
-		 */
-		@Override
-		public void onStatusChanged(String provider, int status, Bundle extras) {
-			if (status == LocationProvider.TEMPORARILY_UNAVAILABLE) {
-				listening = false;
-			}
-		}
-
-		@Override
-		public void onProviderEnabled(String provider) {
-		}
-
-		@Override
-		public void onProviderDisabled(String provider) {
-		}
-
-	};
 
 	/**
 	 * Broadcasting location update
@@ -217,11 +159,7 @@ public class AppService extends Service {
 		// first time we call startLocationUpdates from MainActivity
 		this.locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-		startLocationUpdates();
-
 		AppService.running = true;
-
-		this.requestLastKnownLocation();
 
 	}
 
@@ -232,9 +170,6 @@ public class AppService extends Service {
 	public void onDestroy() {
 
 		AppService.running = false;
-
-		// stop listener without delay
-		this.stopLocationUpdatesNow();
 
 		this.locationManager = null;
 
@@ -347,53 +282,6 @@ public class AppService extends Service {
 	 */
 	public boolean isGpsInUse() {
 		return this.gpsInUse;
-	}
-
-	/**
-	 * Requesting last location from GPS or Network provider
-	 */
-	public void requestLastKnownLocation() {
-
-		Location location;
-
-		if (currentLocation != null) {
-			return;
-		}
-
-		// get last known location from gps provider
-		location = this.locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-		if (location != null) {
-			broadcastLocationUpdate(location, BroadcastIntents.LOCATION_UPDATE);
-		}
-
-		currentLocation = location;
-
-	}
-
-	/**
-	 * 
-	 */
-	private void startLocationUpdates() {
-
-		this.listening = false;
-
-		this.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
-
-		// setting gpsInUse to true, but listening is still false at this point
-		// listening is set to true with first location update in
-		// LocationListener.onLocationChanged
-		gpsInUse = true;
-	}
-
-	/**
-	 * stop location updates without giving a chance for other activities to
-	 * grab GPS sensor
-	 */
-	private void stopLocationUpdatesNow() {
-		locationManager.removeUpdates(locationListener);
-		listening = false;
-		gpsInUse = false;
 	}
 
 	// ///////////////////////////////////////////////////////////////////////////////////////////////
