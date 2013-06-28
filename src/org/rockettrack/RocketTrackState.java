@@ -15,9 +15,6 @@ public class RocketTrackState {
 	
 	private RawDataAdapter rawData = new RawDataAdapter();
 	
-	private double azimuth = 0.0;
-	private double declination = 0.0;
-	
 	public RawDataAdapter getRawDataAdapter(){
 		return rawData;
 	}
@@ -26,20 +23,4 @@ public class RocketTrackState {
 		return locData;
 	}
 
-	public double getAzimuth() {
-		return azimuth;
-	}
-
-	public void setAzimuth(double azimuth) {
-		this.azimuth = azimuth;
-	}
-
-	public double getDeclination() {
-		return declination;
-	}
-
-	public void setDeclination(double declination) {
-		this.declination = declination;
-	}
-	
 }

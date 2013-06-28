@@ -50,8 +50,6 @@ public class AppService extends Service {
 
 	private LocationManager locationManager;
 
-	private SensorManager sensorManager;
-
 	/**
 	 * current device location
 	 */
@@ -174,39 +172,6 @@ public class AppService extends Service {
 	private void sendLocalBroadcast( Intent i ) {
 		LocalBroadcastManager.getInstance(this).sendBroadcast(i);
 	}
-	/**
-	 * 
-	 */
-	private SensorEventListener sensorListener = new SensorEventListener() {
-
-		@Override
-		public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-		}
-
-		@Override
-		public void onSensorChanged(SensorEvent event) {
-
-			// let's broadcast compass data to any activity waiting for updates
-			Intent intent = new Intent(BroadcastIntents.COMPASS_UPDATE);
-
-			// packing azimuth value into bundle
-			Bundle bundle = new Bundle();
-			bundle.putFloat("azimuth", event.values[0]);
-			bundle.putFloat("pitch", event.values[1]);
-			bundle.putFloat("roll", event.values[2]);
-
-			RocketTrackState.getInstance().setAzimuth(event.values[0]);
-			RocketTrackState.getInstance().setDeclination(event.values[1]);
-			
-			intent.putExtras(bundle);
-
-			// broadcasting compass updates
-			sendLocalBroadcast(intent);
-
-		}
-
-	};
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////
 	/**
@@ -252,9 +217,6 @@ public class AppService extends Service {
 		// first time we call startLocationUpdates from MainActivity
 		this.locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-		// orientation sensor
-		this.sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
 		startLocationUpdates();
 
 		AppService.running = true;
@@ -274,10 +236,7 @@ public class AppService extends Service {
 		// stop listener without delay
 		this.stopLocationUpdatesNow();
 
-		this.stopSensorUpdates();
-
 		this.locationManager = null;
-		this.sensorManager = null;
 
 		// Demote us from the foreground, and cancel the persistent notification.
 		stopForeground(true);
@@ -435,18 +394,6 @@ public class AppService extends Service {
 		locationManager.removeUpdates(locationListener);
 		listening = false;
 		gpsInUse = false;
-	}
-
-	public void startSensorUpdates() {
-		this.sensorManager.registerListener(sensorListener, sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-				SensorManager.SENSOR_DELAY_NORMAL);
-	}
-
-	/**
-	 * stop compass listener
-	 */
-	public void stopSensorUpdates() {
-		this.sensorManager.unregisterListener(sensorListener);
 	}
 
 	// ///////////////////////////////////////////////////////////////////////////////////////////////

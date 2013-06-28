@@ -1,6 +1,9 @@
 package org.rockettrack;
 
 import android.database.DataSetObserver;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -23,11 +26,11 @@ public class CurrentInfoFragment extends Fragment {
 	
 	TextView bearing;
 	TextView distance;
-	TextView azimuth;
+	TextView azimuthView;
 	
 	TextView declto;
 	TextView decl;
-
+	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View root = inflater.inflate(R.layout.current_view, null, false);
@@ -42,7 +45,7 @@ public class CurrentInfoFragment extends Fragment {
 		bearing = (TextView) root.findViewById(R.id.bearing);
 		distance = (TextView) root.findViewById(R.id.distance);
 		
-		azimuth = (TextView) root.findViewById(R.id.azimuth);
+		azimuthView = (TextView) root.findViewById(R.id.azimuth);
 		declto = (TextView) root.findViewById(R.id.declto);
 		decl = (TextView) root.findViewById(R.id.declination);
 
@@ -98,8 +101,6 @@ public class CurrentInfoFragment extends Fragment {
 			distance.setText( String.valueOf(handsetLoc.distanceTo(rocketPos)));
 		}
 		
-		azimuth.setText( String.valueOf( RocketTrackState.getInstance().getAzimuth()));
-		decl.setText( String.valueOf(RocketTrackState.getInstance().getDeclination()));
 	}
 	
 }

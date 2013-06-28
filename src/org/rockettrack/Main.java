@@ -348,8 +348,6 @@ public class Main extends FragmentActivity {
 				return;
 			}
 
-			appService.startSensorUpdates();
-
 			Main.this.connectOrSelectDevice();
 
 //			currentLocation = appService.getCurrentLocation();
