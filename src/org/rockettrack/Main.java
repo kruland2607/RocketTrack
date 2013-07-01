@@ -3,9 +3,7 @@ package org.rockettrack;
 import org.rockettrack.service.AppService;
 import org.rockettrack.service.AppServiceConnection;
 import org.rockettrack.service.BroadcastIntents;
-import org.rockettrack.util.SystemUiHider;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -14,22 +12,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTabHost;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
+import android.widget.TabHost;
 import android.widget.Toast;
 
 /**
@@ -55,35 +51,8 @@ public class Main extends FragmentActivity {
 	// Intent request codes
 	private static final int REQUEST_CONNECT_DEVICE = 1;
 
-	private ViewPager viewFlow;
-
-	/**
-	 * Whether or not the system UI should be auto-hidden after
-	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-	 */
-	private static final boolean AUTO_HIDE = false;
-
-	/**
-	 * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-	 * user interaction before hiding the system UI.
-	 */
-	private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-	/**
-	 * If set, will toggle the system UI visibility upon interaction. Otherwise,
-	 * will show the system UI visibility upon interaction.
-	 */
-	private static final boolean TOGGLE_ON_CLICK = true;
-
-	/**
-	 * The flags to pass to {@link SystemUiHider#getInstance}.
-	 */
-	private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-
-	/**
-	 * The instance of the {@link SystemUiHider} for this activity.
-	 */
-	private SystemUiHider mSystemUiHider;
+	
+    private FragmentTabHost mTabHost;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -97,75 +66,18 @@ public class Main extends FragmentActivity {
 
 		setContentView(R.layout.activity_main);
 
-		final View controlsView = findViewById(R.id.fullscreen_content_controls);
-		final View contentView = findViewById(R.id.fullscreen_content);
+        mTabHost = (FragmentTabHost)findViewById(android.R.id.tabhost);
+        mTabHost.setup(this, getSupportFragmentManager(), R.id.realtabcontent);
 
-		// Set up an instance of SystemUiHider to control the system UI for
-		// this activity.
-		mSystemUiHider = SystemUiHider.getInstance(this, contentView,
-				HIDER_FLAGS);
-		mSystemUiHider.setup();
-		mSystemUiHider
-		.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-			// Cached values.
-			int mControlsHeight;
-			int mShortAnimTime;
+        mTabHost.addTab(mTabHost.newTabSpec("console").setIndicator("Console"),
+                ConsoleOutputFragment.class, null);
+        mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator("Info"),
+                CurrentInfoFragment.class, null);
+        mTabHost.addTab(mTabHost.newTabSpec("map").setIndicator("Map"),
+                MapFragment.class, null);
+        mTabHost.addTab(mTabHost.newTabSpec("compass").setIndicator("Compass"),
+                CompassNaviFragment.class, null);
 
-			@Override
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-			public void onVisibilityChange(boolean visible) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-					// If the ViewPropertyAnimator API is available
-					// (Honeycomb MR2 and later), use it to animate the
-					// in-layout UI controls at the bottom of the
-					// screen.
-					if (mControlsHeight == 0) {
-						mControlsHeight = controlsView.getHeight();
-					}
-					if (mShortAnimTime == 0) {
-						mShortAnimTime = getResources().getInteger(
-								android.R.integer.config_shortAnimTime);
-					}
-					controlsView
-					.animate()
-					.translationY(visible ? 0 : mControlsHeight)
-					.setDuration(mShortAnimTime);
-				} else {
-					// If the ViewPropertyAnimator APIs aren't
-					// available, simply show or hide the in-layout UI
-					// controls.
-					controlsView.setVisibility(visible ? View.VISIBLE
-							: View.GONE);
-				}
-
-				if (visible && AUTO_HIDE) {
-					// Schedule a hide().
-					delayedHide(AUTO_HIDE_DELAY_MILLIS);
-				}
-			}
-		});
-
-		// Set up the user interaction to manually show or hide the system UI.
-
-		// Upon interacting with UI controls, delay any scheduled hide()
-		// operations to prevent the jarring behavior of controls going away
-		// while interacting with the UI.
-		viewFlow = (ViewPager) findViewById(R.id.viewflow);
-		viewFlow.setOnTouchListener(mDelayHideTouchListener);
-		viewFlow.setAdapter(new PageAdapter(getSupportFragmentManager()));
-
-	}
-
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
-
-		// Trigger the initial hide() shortly after the activity has been
-		// created, to briefly hint to the user that UI controls
-		// are available.
-		if ( AUTO_HIDE ) {
-			delayedHide(100);
-		}
 	}
 
 	@Override
@@ -267,9 +179,6 @@ public class Main extends FragmentActivity {
 				String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
 				connectDevice(address);
 			}
-			if (AUTO_HIDE) {
-				delayedHide(AUTO_HIDE_DELAY_MILLIS);
-			}
 			break;
 		}
 	}
@@ -285,49 +194,6 @@ public class Main extends FragmentActivity {
 		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
 		Log.d(TAG, "Connecting to " + device.getName());
 		serviceConnection.getService().connectToRocketTracker(device);
-	}
-
-	public class PageAdapter extends FragmentPagerAdapter {
-
-		private final Fragment[] frags = new Fragment[4];
-
-		public PageAdapter(FragmentManager fm) {
-			super(fm);
-		}
-
-		@Override
-		public int getCount() {
-			return frags.length;
-		}
-
-		@Override
-		public Fragment getItem(int position) {
-			Fragment f = frags[position];
-			if ( f == null ) {
-				switch (position) {
-				case 0:
-					f = Fragment.instantiate(Main.this, "org.rockettrack.ConsoleOutputFragment");
-					break;
-				case 1:
-					f = Fragment.instantiate(Main.this, "org.rockettrack.CurrentInfoFragment");
-					break;
-				case 3:
-					f = Fragment.instantiate(Main.this, "org.rockettrack.CompassNaviFragment");
-					break;
-				case 2:
-					f = Fragment.instantiate(Main.this,  "org.rockettrack.MapFragment");
-					break;
-				}
-				frags[position] = f;
-			}
-			return f;
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return position;
-		}
-
 	}
 
 	/**
@@ -379,35 +245,4 @@ public class Main extends FragmentActivity {
 		prefEditor.commit();
 	}
 
-	/**
-	 * Touch listener to use for in-layout UI controls to delay hiding the
-	 * system UI. This is to prevent the jarring behavior of controls going away
-	 * while interacting with activity UI.
-	 */
-	View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-		@Override
-		public boolean onTouch(View view, MotionEvent motionEvent) {
-			if (AUTO_HIDE) {
-				delayedHide(AUTO_HIDE_DELAY_MILLIS);
-			}
-			return false;
-		}
-	};
-
-	Handler mHideHandler = new Handler();
-	Runnable mHideRunnable = new Runnable() {
-		@Override
-		public void run() {
-			mSystemUiHider.hide();
-		}
-	};
-
-	/**
-	 * Schedules a call to hide() in [delay] milliseconds, canceling any
-	 * previously scheduled calls.
-	 */
-	private void delayedHide(int delayMillis) {
-		mHideHandler.removeCallbacks(mHideRunnable);
-		mHideHandler.postDelayed(mHideRunnable, delayMillis);
-	}
 }
