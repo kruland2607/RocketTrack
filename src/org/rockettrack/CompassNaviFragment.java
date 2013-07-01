@@ -1,6 +1,5 @@
 package org.rockettrack;
 
-import org.rockettrack.data.GravityMovingAverage;
 import org.rockettrack.util.Unit;
 import org.rockettrack.views.CompassNaviView;
 import org.rockettrack.views.NavigationTarget;
@@ -22,7 +21,6 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,7 +43,6 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	private CompassNaviView mCompassNaviView;
 	private SharedPreferences mSharedPreferences;
 	private NavigationTarget mNavigationTarget = new NavigationTarget();
-	private GravityMovingAverage mGravityMovingAverage;
 
 	// private static final String EXCEPTION_URL = "http://flux.dnsdojo.org/opengpx/trace/";
 
@@ -53,13 +50,11 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	private static final String PREFS_KEY_UNIT_DISTANCE = "distUnitPref";
 	private static final String PREFS_KEY_UNIT_ALTITUDE = "altUnitPref";
 	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
-	private static final String PREFS_KEY_USE_WEIGHTED_AVG = "useWeightedAverage";
 
 	// Some default values
 	private static final String PREFS_DEFAULT_UNIT_DISTANCE = Unit.meter.toString();
 	private static final String PREFS_DEFAULT_UNIT_ALTITUDE = Unit.meter.toString();
 	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
-	private static final boolean PREFS_DEFAULT_USE_WEIGHTED_AVG = false;
 
 	// Sensor values
 	private int mPreviousState = -1;	
@@ -68,31 +63,17 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	float[] inR = new float[16];
 	float[] I = new float[16];
 	float[] gravity;
-	float[] geomag = new float[3];
 	float[] orientVals = new float[3];
 
 	double azimuth = 0;
 
 	static final float ALPHA = 0.2f;
 
-	/** Called when the activity is first created. */
-	@Override
-	public void onCreate(Bundle savedInstanceState) 
-	{
-		super.onCreate(savedInstanceState);
-
-		// Create new instance for compass smoothing
-		this.mGravityMovingAverage = new GravityMovingAverage();
-
-
-
-	}
-
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
 		this.mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-		this.mSensorMagneticField = this.mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		this.mSensorMagneticField = this.mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
 		this.mLocationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
 
 	}
@@ -118,11 +99,6 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 		final float fltMinDistance = 3;
 
 		// Orientation (compass)
-		this.mGravityMovingAverage.clear();
-		final int intWindowSize = 5;
-		this.mGravityMovingAverage.setWindowSize(intWindowSize);
-		this.mGravityMovingAverage.setUseWeightedAverage(this.mSharedPreferences.getBoolean(PREFS_KEY_USE_WEIGHTED_AVG, PREFS_DEFAULT_USE_WEIGHTED_AVG));
-
 		this.mSensorManager.registerListener(this, this.mSensorMagneticField, SensorManager.SENSOR_DELAY_UI);
 
 		// Location (GPS)
@@ -350,43 +326,11 @@ public class CompassNaviFragment extends Fragment implements SensorEventListener
 	@Override
 	public void onSensorChanged(SensorEvent event) 
 	{
-		// If the sensor data is unreliable return
-		if (event.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE)
-			return;
 
-		// Gets the value of the sensor that has been changed
-		switch (event.sensor.getType()) {  
-		case Sensor.TYPE_ACCELEROMETER:
-			// gravity = event.values.clone();
-			// gravity = lowPass(event.values, gravity);
-			gravity = this.mGravityMovingAverage.add(event.values);
-			break;
-		case Sensor.TYPE_MAGNETIC_FIELD:
-			geomag = event.values.clone();
-			break;
-		}
+		float azimuth = Math.round(event.values[0]);
 
-		Log.d(TAG, "Gravity = " + String.valueOf(gravity));
-		// If gravity and geomag have values then find rotation matrix
-		if (gravity != null && geomag != null) 
-		{
-			// checks that the rotation matrix is found
-			final boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
-			if (success) {
-				// SensorManager.remapCoordinateSystem(inR, SensorManager.AXIS_X, SensorManager.AXIS_Z, outR);
-				SensorManager.getOrientation(inR, orientVals);
-				azimuth = Math.toDegrees(orientVals[0]);
-				azimuth = (azimuth + 360) % 360;
-				
-				Log.d(TAG, "Azimuth = " + azimuth);
-				
-				// pitch = Math.toDegrees(orientVals[1]);
-				// roll = Math.toDegrees(orientVals[2]);
-
-				this.mCompassNaviView.setAzimuth((float)azimuth);
-				this.mCompassNaviView.invalidate();
-			}
-		}		
+		this.mCompassNaviView.setAzimuth((float)azimuth);
+		this.mCompassNaviView.invalidate();
 	}
 
 }
