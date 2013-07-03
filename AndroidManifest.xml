@@ -34,7 +34,7 @@
     <application
         android:name=".App"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/ic_rockettrack"
         android:label="@string/app_name">
 
         <!-- You must insert your own Google Maps for Android API v2 key in here. -->

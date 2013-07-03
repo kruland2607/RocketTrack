@@ -201,7 +201,7 @@ public class AppService extends Service {
 		CharSequence text = getText(R.string.telemetry_service_started);
 
 		// Create notification to be displayed while the service runs
-		Notification notification = new Notification(R.drawable.ic_launcher, text, 0);
+		Notification notification = new Notification(R.drawable.ic_rockettrack, text, 0);
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
