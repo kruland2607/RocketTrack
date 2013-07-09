@@ -3,6 +3,7 @@ package org.rockettrack.data;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
@@ -10,6 +11,8 @@ import android.widget.BaseAdapter;
 
 public class RawDataAdapter extends BaseAdapter implements Adapter {
 
+	private static String TAG = "RawDataAdapter";
+	
 	private Queue<String> lines = new ArrayBlockingQueue<String>(200);
 
 	@Override
@@ -50,6 +53,7 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 		}
 		lines.poll();
 		lines.add(data);
+		//Log.d(TAG,"raw data added");
 		this.notifyDataSetChanged();
 	}
 	
