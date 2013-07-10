@@ -21,7 +21,9 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 
 	private final static String TAG = "RocketTrackBaseFragment";
 	
-	protected abstract void onDataChange();
+	protected abstract void onRocketLocationChange();
+	protected abstract void onCompassChange();
+	protected abstract void onMyLocationChange();
 	
 	// My current location;
 	private Location myLocation;
@@ -101,14 +103,14 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 			public void onChanged() {
 				rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 				Log.d(TAG,"DataSetObserver.onChanged()");
-				RocketTrackBaseFragment.this.onDataChange();
+				RocketTrackBaseFragment.this.onRocketLocationChange();
 			}
 
 			@Override
 			public void onInvalidated() {
 				rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 				Log.d(TAG,"DataSetObserver.onInvalidated()");
-				RocketTrackBaseFragment.this.onDataChange();
+				RocketTrackBaseFragment.this.onRocketLocationChange();
 			}
 		};
 		
@@ -148,7 +150,7 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 			tsLastAzimuth = arg0.timestamp;
 			azimuth = Math.round(arg0.values[0]);
 			Log.d(TAG,"onSensorChanged()");
-			RocketTrackBaseFragment.this.onDataChange();
+			RocketTrackBaseFragment.this.onCompassChange();
 		}
 	}
 
@@ -163,7 +165,7 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 	}
 
 	@Override
-	public void onLocationChanged(Location location) 
+	final public void onLocationChanged(Location location) 
 	{
 		myLocation = location;
 		geoField = new GeomagneticField(
@@ -171,7 +173,8 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 				Double.valueOf(location.getLongitude()).floatValue(),
 				Double.valueOf(location.getAltitude()).floatValue(),
 				System.currentTimeMillis()
-				);		
+				);
+		this.onMyLocationChange();
 	}
 
 	@Override

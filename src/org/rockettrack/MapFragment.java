@@ -67,8 +67,6 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 	private List<LatLng> rocketPosList;
 
-	private LatLng myPosition;
-
 	private boolean followMe = false;
 
 	public MapFragment() {
@@ -96,10 +94,23 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 	@Override
 	public void onResume() {
+		Log.d(TAG,"+++ onResume +++");
 		super.onResume();
 		setUpMapIfNeeded();
+		// Redraw rocket location.
+		onRocketLocationChange();
 	}
 
+	@Override
+	public void onPause() {
+		super.onPause();
+		// Clear out the map markers so they get recreated onResume.
+		rocketMarker = null;
+		rocketCircle = null;
+		rocketLine = null;
+		rocketPath = null;
+	}
+	
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView(); 
@@ -115,30 +126,34 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 
 	@Override
-	public void onLocationChanged(Location location) {
-		super.onLocationChanged(location);
+	public void onMyLocationChange() {
 		Log.d(TAG,"onLocationChagned");
+		
+		Location location = getMyLocation();
 		if(mMap == null)
 			return;
 
-		myPosition = new LatLng(location.getLatitude(),location.getLongitude());
+		LatLng myPosition = new LatLng(location.getLatitude(),location.getLongitude());
 
-		if(rocketPosList.size() > 0){
-			LatLng rocketPosition = rocketPosList.get(rocketPosList.size() -1);
+		Location rocketLocation = getRocketLocation();
+		if( rocketLocation != null ){
+			LatLng rocketPosition = new LatLng(rocketLocation.getLatitude(), rocketLocation.getLongitude());
 			updateRocketLine(location,rocketPosition);
 		}
 
-		if( followMe ) {
-			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).target(myPosition).build();
+		if ( followMe ) {
+			float heading = getAzimuth();
+			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).target(myPosition).bearing(heading).zoom(20).build();
 			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 		}
+
 	}
 
 	
 	@Override
-	protected void onDataChange() {
-		Log.d(TAG,"onDataChange");
-		updateRocketLocation();
+	protected void onCompassChange() {
+		Log.d(TAG,"onCompassChange");
+		updateBearing();
 	}
 
 	private void setUpMapIfNeeded() {
@@ -165,11 +180,12 @@ public class MapFragment extends RocketTrackBaseFragment {
 		mUiSettings.setMyLocationButtonEnabled(false);
 		mUiSettings.setZoomControlsEnabled(false);
 
-		updateRocketLocation();
-
 	}
 
 	private void  updateBearing() {
+		if ( mMap == null ) {
+			return;
+		}
 		float heading = getAzimuth();
 		if ( followMe ) {
 			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).bearing(heading).zoom(20).build();
@@ -184,8 +200,8 @@ public class MapFragment extends RocketTrackBaseFragment {
 	}
 	
 
-
-	private void updateRocketLocation() {
+	@Override
+	protected void onRocketLocationChange() {
 		if (mMap == null ) {
 			return;
 		}
@@ -211,7 +227,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 			rocketCircle.setRadius( rocketLocation.getAccuracy() );
 		}
 
-		Location myLoc = mMap.getMyLocation();
+		Location myLoc = getMyLocation();
 		//myLoc = null when the android gps is not initialized yet.
 		if(myLoc == null)
 		{
@@ -249,10 +265,13 @@ public class MapFragment extends RocketTrackBaseFragment {
 	}
 
 	private void updateRocketLine(Location rocketLocation,LatLng rocketPosition) {
-		if(myPosition == null || rocketPosition == null)
+		if(getMyLocation() == null || rocketPosition == null)
 			return;
+		Location myLocation = getMyLocation();
+		LatLng myPosition = new LatLng(myLocation.getLatitude(),myLocation.getLongitude());
+
 		//Rocket Distance
-		rocketDistance = mMap.getMyLocation().distanceTo(rocketLocation);
+		rocketDistance = myLocation.distanceTo(rocketLocation);
 		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
 		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
 

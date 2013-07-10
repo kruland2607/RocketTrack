@@ -57,11 +57,14 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 	}
 
 	@Override
-	protected void onDataChange() {
+	protected void onCompassChange() {
+		mCompassNaviView.setAzimuth(getAzimuth());
+	}
+	
+	@Override
+	protected void onRocketLocationChange() {
 		Location l = getRocketLocation();
 		setNavigationTarget("Rocket", l);
-		mCompassNaviView.setAzimuth(getAzimuth());
-		
 	}
 
 	/**
@@ -146,8 +149,9 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 
 
 	@Override
-	public void onLocationChanged(Location location) 
+	protected void onMyLocationChange() 
 	{
+		Location location = getMyLocation();
 		if (location != null)
 		{
 			this.mCompassNaviView.setLocation(location);
