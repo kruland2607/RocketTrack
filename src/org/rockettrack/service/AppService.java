@@ -17,14 +17,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -47,13 +41,6 @@ public class AppService extends Service {
 	private final static int NOTIFICATION = R.string.telemetry_service_label;
 
 	private static boolean running = false;
-
-	private LocationManager locationManager;
-
-	/**
-	 * is GPS in use?
-	 */
-	private boolean gpsInUse;
 
 	/**
 	 * listening for location updates flag  // FIXME  - change to recording..
@@ -121,17 +108,13 @@ public class AppService extends Service {
 	 */
 	private final IBinder mBinder = new LocalBinder();
 
-	private boolean bound;
-
 	@Override
 	public IBinder onBind(Intent intent) {
-		bound = true;
 		return mBinder;
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent) {
-		bound = false;
 		return true;
 	}
 
@@ -155,10 +138,6 @@ public class AppService extends Service {
 		registerReceiver(nextTimeLimitCheckReceiver, new IntentFilter(IN_USE_CHECK));
 		this.scheduleNextTimeLimitCheck();
 
-		// location sensor
-		// first time we call startLocationUpdates from MainActivity
-		this.locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
 		AppService.running = true;
 
 	}
@@ -170,8 +149,6 @@ public class AppService extends Service {
 	public void onDestroy() {
 
 		AppService.running = false;
-
-		this.locationManager = null;
 
 		// Demote us from the foreground, and cancel the persistent notification.
 		stopForeground(true);
@@ -261,7 +238,7 @@ public class AppService extends Service {
 		public void onReceive(Context context, Intent intent) {
 
 			// controlling the time passed since requestStartTime
-			if (bound /* || isRecording */ ) {
+			if ( state == STATE_CONNECTED ) {
 				scheduleNextTimeLimitCheck();
 				return;
 			}
@@ -276,14 +253,6 @@ public class AppService extends Service {
 		return running;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
-	public boolean isGpsInUse() {
-		return this.gpsInUse;
-	}
-
 	// ///////////////////////////////////////////////////////////////////////////////////////////////
 	// ///////////////////////////////////////////////////////////////////////////////////////////////
 	// ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,6 +260,10 @@ public class AppService extends Service {
 	public void connectToRocketTracker( BluetoothDevice device ) {
 		Log.d(TAG, "Connect command received");
 		if (device == null) {
+			return;
+		}
+		// already connected to this device?
+		if ( mAltosBluetooth != null && device.getAddress().equals( this.device.getAddress()) ) {
 			return;
 		}
 		if (mAltosBluetooth != null ) {
@@ -306,6 +279,10 @@ public class AppService extends Service {
 		}
 	}
 
+	public void stopService() {
+		stopSelf();
+	}
+	
 	private synchronized void setState(int s) {
 		Log.d(TAG, "setState(): " + state + " -> " + s);
 		state = s;
@@ -339,7 +316,6 @@ public class AppService extends Service {
 
 		setState(STATE_CONNECTED);
 
-		//		mTelemetryLogger = new TelemetryLogger(this, mAltosBluetooth);
 	}
 
 	// Handler of incoming messages from clients.

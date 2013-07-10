@@ -90,7 +90,7 @@ public class RocketTrackBluetooth implements Runnable {
 				if (c == '\n') {
 					if (line_count != 0) {
 						String string = new String(line_bytes, 0, line_count);
-						Log.v(TAG,"Line = " + string);
+						//Log.v(TAG,"Line = " + string);
 						Message.obtain(handler, AppService.MSG_TELEMETRY, string).sendToTarget();
 						// Here we do something with the string.
 						//							add_bytes(line_bytes, line_count);

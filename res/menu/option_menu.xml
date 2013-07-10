@@ -21,6 +21,9 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/connect_device"/>
     <item
+        android:id="@+id/stop_service"
+        android:title="@string/stop_service"/>
+    <item
         android:id="@+id/save_recording"
         android:title="@string/save_recording"/>
     <item

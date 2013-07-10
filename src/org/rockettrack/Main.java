@@ -14,18 +14,13 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTabHost;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.TabHost;
 import android.widget.Toast;
 
 /**
@@ -164,6 +159,10 @@ public class Main extends FragmentActivity {
 		case R.id.menu_preferences:
 			Intent i = new Intent(this,Preferences.class);
 			startActivity(i);
+			break;
+		case R.id.stop_service:
+			serviceConnection.getService().stopService();
+			break;
 		}
 		return false;
 	}

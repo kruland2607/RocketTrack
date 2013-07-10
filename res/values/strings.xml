@@ -16,7 +16,8 @@
     <string name="button_scan">Scan for devices</string>
 
     <!-- Options Menu -->
-    <string name="connect_device">Connect a device</string>
+    <string name="connect_device">Connect Tracker</string>
+    <string name="stop_service">Stop Service</string>
     <string name="save_recording">Save Recording</string>
     <string name="menu_preferences">Preferences</string>
     
