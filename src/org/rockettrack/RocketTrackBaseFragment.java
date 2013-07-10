@@ -32,6 +32,9 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 	// Current handset azimuth
 	private float azimuth;
 	
+	// Timestamp for previous handset location
+	private long tsLastAzimuth = 0l;
+	
 	// Sensor values
 	private int mPreviousState = -1;	
 
@@ -138,9 +141,15 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 
 	@Override
 	public void onSensorChanged(SensorEvent arg0) {
-		azimuth = Math.round(arg0.values[0]);
-		Log.d(TAG,"onSensorChanged()");
-		RocketTrackBaseFragment.this.onDataChange();
+		synchronized(this) {
+			if ( arg0.timestamp < tsLastAzimuth + 500000000 /*nanoseconds*/ ) {
+				return;
+			}
+			tsLastAzimuth = arg0.timestamp;
+			azimuth = Math.round(arg0.values[0]);
+			Log.d(TAG,"onSensorChanged()");
+			RocketTrackBaseFragment.this.onDataChange();
+		}
 	}
 
 	@Override
