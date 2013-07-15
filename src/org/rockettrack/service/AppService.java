@@ -55,10 +55,9 @@ public class AppService extends Service {
 	// internally track state of bluetooth connection
 	private int state = STATE_NONE;
 
-	static final int STATE_NONE       = 0;
-	static final int STATE_READY      = 1;
-	static final int STATE_CONNECTING = 2;
-	static final int STATE_CONNECTED  = 3;
+	private static final int STATE_NONE       = 0;
+	private static final int STATE_CONNECTING = 2;
+	private static final int STATE_CONNECTED  = 3;
 
 	static final int MSG_CONNECTED         = 4;
 	static final int MSG_CONNECT_FAILED    = 5;
@@ -297,7 +296,7 @@ public class AppService extends Service {
 
 	private void stopAltosBluetooth() {
 		Log.d(TAG, "stopAltosBluetooth(): begin");
-		setState(STATE_READY);
+		setState(STATE_NONE);
 		if (mAltosBluetooth != null) {
 			Log.d(TAG, "stopAltosBluetooth(): stopping AltosBluetooth");
 			mAltosBluetooth.close();
@@ -316,6 +315,13 @@ public class AppService extends Service {
 
 		setState(STATE_CONNECTED);
 
+		// Send setup commands: 
+		// this should increase the run time of the tx.
+		mAltosBluetooth.print("$PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29/n");
+		// This one sets the dgps mode to sbas:
+		mAltosBluetooth.print("$PMTK301,2*2E/n");
+		// And this one enables sbas:
+		mAltosBluetooth.print("$PMTK313,1*2E/n");
 	}
 
 	// Handler of incoming messages from clients.
