@@ -39,6 +39,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -97,6 +99,8 @@ public class MapFragment extends RocketTrackBaseFragment {
 		Log.d(TAG,"+++ onResume +++");
 		super.onResume();
 		setUpMapIfNeeded();
+		// Force old markers to disappear
+		mMap.clear();
 		// Redraw rocket location.
 		onRocketLocationChange();
 	}
@@ -215,10 +219,12 @@ public class MapFragment extends RocketTrackBaseFragment {
 		rocketPosList.add(rocketPosition);
 
 		//Draw marker at Rocket position
-		if(rocketMarker == null)
-			rocketMarker = mMap.addMarker(new MarkerOptions().position(rocketPosition));
-		else
+		if(rocketMarker == null) {
+			BitmapDescriptor rocketIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_stat_notify_icon);
+			rocketMarker = mMap.addMarker(new MarkerOptions().position(rocketPosition).icon(rocketIcon));
+		} else {
 			rocketMarker.setPosition(rocketPosition);
+		}
 		if ( rocketCircle == null ) {
 			CircleOptions options = new CircleOptions().center( rocketPosition ).radius( rocketLocation.getAccuracy() );
 			rocketCircle = mMap.addCircle(options);
