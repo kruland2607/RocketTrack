@@ -6,7 +6,7 @@
 
     <uses-sdk
         android:minSdkVersion="10"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="10" />
 
     <permission
         android:name="org.rockettrack.permission.MAPS_RECEIVE"
@@ -35,7 +35,8 @@
         android:name=".App"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name">
+        android:label="@string/app_name"
+        android:theme="@style/Theme.NoTitle">
 
         <!-- You must insert your own Google Maps for Android API v2 key in here. -->
         <meta-data
