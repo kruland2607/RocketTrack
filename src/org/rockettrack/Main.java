@@ -260,7 +260,9 @@ public class Main extends FragmentActivity {
 		// Fixme - move to separate thread.
 		try {
 			Date now = new Date();
-			File myFile = new File(((App)getApplication()).getAppDir()+"/rocket_path.txt");
+			// Build File name
+			String fileName = ((App)getApplication()).getAppDir() + "/raw_gps-" + now.getTime() + ".txt";
+			File myFile = new File(fileName);
 			myFile.createNewFile();
 			FileOutputStream fOut = new FileOutputStream(myFile);
 			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
