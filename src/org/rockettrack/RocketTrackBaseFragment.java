@@ -1,9 +1,10 @@
 package org.rockettrack;
 
+import java.util.List;
+
 import org.rockettrack.util.ExponentialAverage;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.database.DataSetObserver;
 import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
@@ -76,6 +77,10 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 		return rocketLocation;
 	}
 
+	protected List<Location> getRocketLocationHistory() {
+		return RocketTrackState.getInstance().getLocationDataAdapter().getLocationHistory();
+	}
+	
 	protected float getAzimuth() {
 		if ( accMagOrientation == null ) {
 			return 0f;

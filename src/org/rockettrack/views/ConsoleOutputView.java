@@ -1,5 +1,7 @@
 package org.rockettrack.views;
 
+import java.util.List;
+
 import org.rockettrack.RocketTrackState;
 
 import android.content.Context;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 public class ConsoleOutputView extends ImageView {
 
 	private TextView lineView;
+	private int numberOfLines;
 	
 	public ConsoleOutputView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -32,9 +35,14 @@ public class ConsoleOutputView extends ImageView {
 		Paint textPaint = lineView.getPaint();
 		int baseline = computeBaseLine();
 		
-		String[] lines = RocketTrackState.getInstance().getRawDataAdapter().getRawData();
+		List<String> lines = RocketTrackState.getInstance().getRawDataAdapter().getRawData();
+		int firstLine = lines.size() - numberOfLines;
+		if ( firstLine < 0 ) {
+			firstLine = 0;
+		}
 		int y= -1* Math.round( textPaint.getFontMetrics().top ) ;
-		for( String s : lines) {
+		for( int i = firstLine; i< lines.size(); i++ ) {
+			String s = lines.get(i);
 			canvas.drawText(s,0,y,textPaint);
 			y+=baseline;
 		}
@@ -43,8 +51,7 @@ public class ConsoleOutputView extends ImageView {
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
-		int numberOfLines = h / computeBaseLine() - 1;
-		RocketTrackState.getInstance().getRawDataAdapter().resizeLines(numberOfLines);
+		numberOfLines = h / computeBaseLine() - 1;
 	}
 
 	private int computeBaseLine() {

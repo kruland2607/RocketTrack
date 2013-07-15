@@ -1,7 +1,7 @@
 package org.rockettrack.data;
 
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.util.Log;
 import android.view.View;
@@ -13,7 +13,7 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 
 	private static String TAG = "RawDataAdapter";
 	
-	private Queue<String> lines = new ArrayBlockingQueue<String>(200);
+	private List<String> lines = new ArrayList<String>(200);
 
 	@Override
 	public int getCount() {
@@ -43,22 +43,14 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 		return null;
 	}
 
-	public void resizeLines( int newSize ) {
-		lines = new ArrayBlockingQueue<String>(newSize);
-	}
-
 	public void addRawData( String data ) {
-		if ( lines.offer(data)  == true ) {
-			return;
-		}
-		lines.poll();
 		lines.add(data);
 		//Log.d(TAG,"raw data added");
 		this.notifyDataSetChanged();
 	}
 	
-	public String[] getRawData() {
-		return lines.toArray( new String[0] );
+	public List<String> getRawData() {
+		return lines;
 	}
 	
 	public void clearRawData() {

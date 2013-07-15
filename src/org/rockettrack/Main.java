@@ -1,5 +1,11 @@
 package org.rockettrack;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.util.Date;
+import java.util.List;
+
 import org.rockettrack.service.AppService;
 import org.rockettrack.service.AppServiceConnection;
 import org.rockettrack.service.BroadcastIntents;
@@ -13,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTabHost;
@@ -155,6 +162,7 @@ public class Main extends FragmentActivity {
 			selectDevice();
 			return true;
 		case R.id.save_recording:
+			saveRawRecording();
 			return true;
 		case R.id.menu_preferences:
 			Intent i = new Intent(this,Preferences.class);
@@ -244,4 +252,30 @@ public class Main extends FragmentActivity {
 		prefEditor.commit();
 	}
 
+	private void saveRawRecording() {
+		List<String> lines = RocketTrackState.getInstance().getRawDataAdapter().getRawData();
+		if( lines == null || lines.size() == 0 ) {
+			return;
+		}
+		// Fixme - move to separate thread.
+		try {
+			Date now = new Date();
+			File myFile = new File(((App)getApplication()).getAppDir()+"/rocket_path.txt");
+			myFile.createNewFile();
+			FileOutputStream fOut = new FileOutputStream(myFile);
+			OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+			for( String s: lines ) {
+				myOutWriter.append(s).append("\n");
+			}
+			myOutWriter.close();
+			fOut.close();
+			Toast.makeText(getBaseContext(),
+					"Done writing file",
+					Toast.LENGTH_SHORT).show();
+		} catch (Exception e) {
+			Toast.makeText(getBaseContext(), e.getMessage(),
+					Toast.LENGTH_LONG).show();
+		}		
+
+	}
 }

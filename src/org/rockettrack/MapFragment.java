@@ -67,13 +67,10 @@ public class MapFragment extends RocketTrackBaseFragment {
 	private float rocketDistance = 0;
 	private double maxAltitude;
 
-	private List<LatLng> rocketPosList;
-
 	private boolean followMe = false;
 
 	public MapFragment() {
 		super();
-		rocketPosList = new ArrayList<LatLng>();
 	}
 
 	@Override
@@ -216,8 +213,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 			return;
 
 		LatLng rocketPosition = new LatLng(rocketLocation.getLatitude(), rocketLocation.getLongitude());
-		rocketPosList.add(rocketPosition);
-
+		
 		//Draw marker at Rocket position
 		if(rocketMarker == null) {
 			BitmapDescriptor rocketIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_stat_notify_icon);
@@ -259,13 +255,17 @@ public class MapFragment extends RocketTrackBaseFragment {
 		//Draw line between myPosition and Rocket
 		LatLng myPosition = new LatLng(myLoc.getLatitude(),myLoc.getLongitude());
 
-		if (rocketPath == null) {
-			rocketPath = mMap.addPolyline(new PolylineOptions()
-			.add(rocketPosList.get(0))
-			.width(1.0f)
-			.color(Color.rgb(0, 0, 128)));
-		} 
-		rocketPath.setPoints(rocketPosList);
+		List<Location> rocketLocationHistory = getRocketLocationHistory();
+		if ( rocketLocationHistory != null && rocketLocationHistory.size() > 0 ) {
+			List<LatLng> rocketPosList = new ArrayList<LatLng>(rocketLocationHistory.size());
+			for( Location l : rocketLocationHistory ) {
+				rocketPosList.add( new LatLng(l.getLatitude(), l.getLongitude()));
+			}
+			if ( rocketPath == null ) {
+				rocketPath = mMap.addPolyline( new PolylineOptions().width(1.0f).color(Color.rgb(0,0,128)));
+			}
+			rocketPath.setPoints(rocketPosList);
+		}
 
 		updateRocketLine(rocketLocation,rocketPosition);
 	}
