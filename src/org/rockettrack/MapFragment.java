@@ -217,7 +217,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 		//Draw marker at Rocket position
 		if(rocketMarker == null) {
 			BitmapDescriptor rocketIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_stat_notify_icon);
-			rocketMarker = mMap.addMarker(new MarkerOptions().position(rocketPosition).icon(rocketIcon));
+			rocketMarker = mMap.addMarker(new MarkerOptions().anchor(0.5f, 0.5f).position(rocketPosition).icon(rocketIcon));
 		} else {
 			rocketMarker.setPosition(rocketPosition);
 		}
