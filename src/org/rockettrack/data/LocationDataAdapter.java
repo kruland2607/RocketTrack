@@ -19,6 +19,12 @@ public class LocationDataAdapter extends BaseAdapter {
 	private final float minDistance = 20f; // meters
 	private final int minTime = 1000; // millis
 	
+	public void clear() {
+		lastTime = 0;
+		currentRocketPosition = null;
+		locationHistory.clear();
+	}
+	
 	public Location getRocketPosition() {
 		return currentRocketPosition;
 	}

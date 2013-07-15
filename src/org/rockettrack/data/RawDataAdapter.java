@@ -15,6 +15,10 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 	
 	private List<String> lines = new ArrayList<String>(200);
 
+	public void clear() {
+		lines.clear();
+	}
+	
 	@Override
 	public int getCount() {
 		return lines.size();

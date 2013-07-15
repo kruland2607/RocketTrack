@@ -15,6 +15,11 @@ public class RocketTrackState {
 	
 	private RawDataAdapter rawData = new RawDataAdapter();
 	
+	public void clear() {
+		rawData.clear();
+		locData.clear();
+	}
+	
 	public RawDataAdapter getRawDataAdapter(){
 		return rawData;
 	}
