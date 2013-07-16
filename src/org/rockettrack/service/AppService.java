@@ -317,11 +317,11 @@ public class AppService extends Service {
 
 		// Send setup commands: 
 		// this should increase the run time of the tx.
-		mAltosBluetooth.print("$PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29/n");
+		mAltosBluetooth.print("$PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29/r/n");
 		// This one sets the dgps mode to sbas:
-		mAltosBluetooth.print("$PMTK301,2*2E/n");
+		mAltosBluetooth.print("$PMTK301,2*2E/r/n");
 		// And this one enables sbas:
-		mAltosBluetooth.print("$PMTK313,1*2E/n");
+		mAltosBluetooth.print("$PMTK313,1*2E/r/n");
 	}
 
 	// Handler of incoming messages from clients.
