@@ -695,6 +695,7 @@ public class CompassNaviView extends View
 	public void setAzimuth(float azimuth)
 	{
 		this.mfltAzimuth = azimuth;
+		this.postInvalidate();
 	}
 	
 	/**
@@ -704,5 +705,6 @@ public class CompassNaviView extends View
 	public void setLocation(Location location)
 	{
 		this.mCurrentLocation = location;
+		this.postInvalidate();
 	}
 }
