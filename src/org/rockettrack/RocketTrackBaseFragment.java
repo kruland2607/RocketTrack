@@ -53,11 +53,9 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 	// accelerometer and magnetometer based rotation matrix
 	private float[] rotationMatrix = new float[9];
 	
-	private float[] unmappedRotationMatrix = new float[9];
-
 	// Filters for sensor values
-	private ExponentialAverage accelAverage = new ExponentialAverage(.5f);
-	private ExponentialAverage magnetAverage = new ExponentialAverage(.5f);
+	private ExponentialAverage accelAverage = new ExponentialAverage(3,.4f);
+	private ExponentialAverage magnetAverage = new ExponentialAverage(3,.25f);
 
 	// Sensor values
 	private int mPreviousState = -1;	
@@ -186,18 +184,21 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 	public void onSensorChanged(SensorEvent event) {
 		switch(event.sensor.getType()) {
 		case Sensor.TYPE_ACCELEROMETER:
-			accel = accelAverage.average(event.values, accel);
+			accel = accelAverage.average(event.values);
 			break;
 
 		case Sensor.TYPE_MAGNETIC_FIELD:
 
-			magnet = magnetAverage.average(event.values, magnet);
+			magnet = magnetAverage.average(event.values);
 			break;
 
 		}
 
 		if ( event.timestamp > lastCompassTs + 100000000 /* .1s in nanoseconds */) {
 			lastCompassTs = event.timestamp;
+			
+			float[] unmappedRotationMatrix = new float[9];
+
 			SensorManager.getRotationMatrix(unmappedRotationMatrix, null, accel, magnet);
 			
 			WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
