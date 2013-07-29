@@ -54,6 +54,11 @@ public class Parser {
 				}
 			}
 			
+			// Check sanity.  The ULINE GPS tends to transmit 0,0 until it gets locked.
+			// since that's in the atlantic ocean off the coast of Africa, we're just going to drop it.
+			if ( l.getLongitude() == 0 && l.getLatitude() == 0 ) {
+				return null;
+			}
 			return l;
 		} else {
 			return null;

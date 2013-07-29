@@ -18,7 +18,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,11 +41,6 @@ public class AppService extends Service {
 
 	private static boolean running = false;
 
-	/**
-	 * listening for location updates flag  // FIXME  - change to recording..
-	 */
-	private boolean listening;
-
 	// Name of the connected device
 	private BluetoothDevice device           = null;
 	private RocketTrackBluetooth  mAltosBluetooth  = null;
@@ -55,21 +49,15 @@ public class AppService extends Service {
 	// internally track state of bluetooth connection
 	private int state = STATE_NONE;
 
-	private static final int STATE_NONE       = 0;
-	private static final int STATE_CONNECTING = 2;
-	private static final int STATE_CONNECTED  = 3;
+	public static final int STATE_NONE       = 0;
+	public static final int STATE_CONNECTING = 2;
+	public static final int STATE_CONNECTED  = 3;
+	public static final int STATE_CONNECT_FAILED = 4;
 
 	static final int MSG_CONNECTED         = 4;
 	static final int MSG_CONNECT_FAILED    = 5;
 	static final int MSG_DISCONNECTED      = 6;
 	static final int MSG_TELEMETRY         = 7;
-
-	/**
-	 * listening getter
-	 */
-	public boolean isListening() {
-		return listening;
-	}
 
 	/**
 	 * Broadcasting location update
@@ -133,10 +121,6 @@ public class AppService extends Service {
 
 		super.onCreate();
 
-		// Set up the kill switch timer.
-		registerReceiver(nextTimeLimitCheckReceiver, new IntentFilter(IN_USE_CHECK));
-		this.scheduleNextTimeLimitCheck();
-
 		AppService.running = true;
 
 	}
@@ -156,11 +140,6 @@ public class AppService extends Service {
 			Log.d(TAG, "Disconnected from " + device.getName());
 			stopAltosBluetooth();
 		}
-
-		// cancel alarm
-		AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		alarmManager.cancel(nextTimeLimitCheckSender);
-		unregisterReceiver(nextTimeLimitCheckReceiver);
 
 		// Tell the user we stopped.
 		Toast.makeText(this, R.string.telemetry_service_stopped, Toast.LENGTH_SHORT).show();
@@ -202,50 +181,6 @@ public class AppService extends Service {
 	// ///////////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * 
-	 */
-	private PendingIntent nextTimeLimitCheckSender;
-	private final static String IN_USE_CHECK = "inusecheck";
-
-	/**
-	 * Scheduling regular checks for GPS signal availability
-	 */
-	private void scheduleNextTimeLimitCheck() {
-
-		Log.d(TAG, "AppService.scheduleNextRequestTimeLimitCheck");
-
-		Intent intent = new Intent(IN_USE_CHECK);
-		nextTimeLimitCheckSender = PendingIntent.getBroadcast(AppService.this, 0, intent, 0);
-
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTimeInMillis(System.currentTimeMillis());
-		calendar.add(Calendar.SECOND, 5);
-
-		// schedule single alarm
-		// if GPS signal is not available we will schedule this event again in
-		// receiver
-		AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), nextTimeLimitCheckSender);
-	}
-
-	/**
-	 * Receives broadcast event every 5 seconds in order to control presence of
-	 * GPS signal
-	 */
-	private BroadcastReceiver nextTimeLimitCheckReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-
-			// controlling the time passed since requestStartTime
-			if ( state == STATE_CONNECTED ) {
-				scheduleNextTimeLimitCheck();
-				return;
-			}
-			stopSelf();
-		}
-	};
-
-	/**
 	 * is service running?
 	 */
 	public static boolean isRunning() {
@@ -262,9 +197,10 @@ public class AppService extends Service {
 			return;
 		}
 		// already connected to this device?
-		if ( mAltosBluetooth != null && device.getAddress().equals( this.device.getAddress()) ) {
+		if ( state == STATE_CONNECTED &&  mAltosBluetooth != null && device.getAddress().equals( this.device.getAddress()) ) {
 			return;
 		}
+		
 		if (mAltosBluetooth != null ) {
 			stopAltosBluetooth();
 		}
@@ -323,6 +259,11 @@ public class AppService extends Service {
 		// And this one enables sbas:
 		mAltosBluetooth.print("$PMTK313,1*2E\r\n");
 	}
+	
+	private void connectFailed() {
+		setState(STATE_CONNECT_FAILED);
+		
+	}
 
 	// Handler of incoming messages from clients.
 	static class IncomingHandler extends Handler {
@@ -340,7 +281,7 @@ public class AppService extends Service {
 				break;
 			case MSG_CONNECT_FAILED:
 				Log.d(TAG, "Connection failed");
-				// FIXME - notify user.
+				s.connectFailed();
 				break;
 			case MSG_DISCONNECTED:
 				// Only do the following if we haven't been shutdown elsewhere..

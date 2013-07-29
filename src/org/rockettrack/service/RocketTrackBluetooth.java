@@ -193,7 +193,7 @@ public class RocketTrackBluetooth implements Runnable {
 
 	private void connection_lost() {
 		if (D) Log.e(TAG, "Connection lost during I/O");
-		handler.obtainMessage(AppService.MSG_DISCONNECTED).sendToTarget();
+		handler.obtainMessage(AppService.MSG_CONNECT_FAILED).sendToTarget();
 	}
 
 	public void print(String data) {

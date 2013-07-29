@@ -177,7 +177,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 		mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		mMap.setMyLocationEnabled(true);
 		UiSettings mUiSettings = mMap.getUiSettings();
-		mUiSettings.setCompassEnabled(true);
+		mUiSettings.setCompassEnabled(false);
 		mUiSettings.setMyLocationButtonEnabled(false);
 		mUiSettings.setZoomControlsEnabled(false);
 

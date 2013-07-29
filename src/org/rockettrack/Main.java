@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTabHost;
@@ -73,8 +72,6 @@ public class Main extends FragmentActivity {
 
         mTabHost.addTab(mTabHost.newTabSpec("console").setIndicator("Console"),
                 ConsoleOutputFragment.class, null);
-        mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator("Info"),
-                CurrentInfoFragment.class, null);
         mTabHost.addTab(mTabHost.newTabSpec("map").setIndicator("Map"),
                 MapFragment.class, null);
         mTabHost.addTab(mTabHost.newTabSpec("compass").setIndicator("Compass"),
@@ -193,7 +190,6 @@ public class Main extends FragmentActivity {
 	public void onDoStop() {
 		serviceConnection.unbindAppService();
 		serviceConnection.stopService();
-
 	}
 
 	private void connectDevice(String macAddress) {
@@ -236,8 +232,13 @@ public class Main extends FragmentActivity {
 			Bundle b = intent.getExtras();
 			int state = b.getInt(BroadcastIntents.STATE);
 			BluetoothDevice d = (BluetoothDevice) b.getParcelable(BroadcastIntents.DEVICE);
-			if ( state == 3 ) {
+			switch( state ) {
+			case AppService.STATE_CONNECTED:
 				onDeviceConnected(d);
+				break;
+			case AppService.STATE_CONNECT_FAILED:
+				onDeviceReconnect(d);
+				break;
 			}
 		}
 		
@@ -250,6 +251,12 @@ public class Main extends FragmentActivity {
 		SharedPreferences.Editor prefEditor = prefs.edit();
 		prefEditor.putString(PREFERED_DEVICE_KEY, device.getAddress());
 		prefEditor.commit();
+	}
+	
+	private void onDeviceReconnect( BluetoothDevice device ) {
+		Toast.makeText(this, "Failed to connect to " + device.getName() + ".  Reconnecting", Toast.LENGTH_LONG).show();
+		Log.d(TAG, "Reconnect to " + device.getName());
+		serviceConnection.getService().connectToRocketTracker(device);
 	}
 
 	private void saveRawRecording() {
