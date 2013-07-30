@@ -53,6 +53,7 @@ public class AppService extends Service {
 	public static final int STATE_CONNECTING = 2;
 	public static final int STATE_CONNECTED  = 3;
 	public static final int STATE_CONNECT_FAILED = 4;
+	public static final int STATE_SHUTDOWN = 5;
 
 	static final int MSG_CONNECTED         = 4;
 	static final int MSG_CONNECT_FAILED    = 5;
@@ -133,6 +134,8 @@ public class AppService extends Service {
 
 		AppService.running = false;
 
+		setState(STATE_SHUTDOWN);
+
 		// Demote us from the foreground, and cancel the persistent notification.
 		stopForeground(true);
 
@@ -200,7 +203,7 @@ public class AppService extends Service {
 		if ( state == STATE_CONNECTED &&  mAltosBluetooth != null && device.getAddress().equals( this.device.getAddress()) ) {
 			return;
 		}
-		
+
 		if (mAltosBluetooth != null ) {
 			stopAltosBluetooth();
 		}
@@ -217,17 +220,19 @@ public class AppService extends Service {
 	public void stopService() {
 		stopSelf();
 	}
-	
-	private synchronized void setState(int s) {
-		Log.d(TAG, "setState(): " + state + " -> " + s);
-		state = s;
-		Intent intent = new Intent( BroadcastIntents.BLUETOOTH_STATE_CHANGE );
-		Bundle b = new Bundle();
-		b.putInt(BroadcastIntents.STATE, s);
-		b.putParcelable(BroadcastIntents.DEVICE, device);
-		intent.putExtras(b);
 
-		sendLocalBroadcast(intent);
+	private synchronized void setState(int s) {
+		if ( state != STATE_SHUTDOWN ) {
+			Log.d(TAG, "setState(): " + state + " -> " + s);
+			state = s;
+			Intent intent = new Intent( BroadcastIntents.BLUETOOTH_STATE_CHANGE );
+			Bundle b = new Bundle();
+			b.putInt(BroadcastIntents.STATE, s);
+			b.putParcelable(BroadcastIntents.DEVICE, device);
+			intent.putExtras(b);
+
+			sendLocalBroadcast(intent);
+		}
 	}
 
 	private void stopAltosBluetooth() {
@@ -259,10 +264,10 @@ public class AppService extends Service {
 		// And this one enables sbas:
 		mAltosBluetooth.print("$PMTK313,1*2E\r\n");
 	}
-	
+
 	private void connectFailed() {
 		setState(STATE_CONNECT_FAILED);
-		
+
 	}
 
 	// Handler of incoming messages from clients.

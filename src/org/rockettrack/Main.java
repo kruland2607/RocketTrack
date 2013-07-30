@@ -166,7 +166,7 @@ public class Main extends FragmentActivity {
 			startActivity(i);
 			break;
 		case R.id.stop_service:
-			serviceConnection.getService().stopService();
+			onDoStop();
 			break;
 		}
 		return false;
@@ -187,8 +187,7 @@ public class Main extends FragmentActivity {
 		}
 	}
 
-	public void onDoStop() {
-		serviceConnection.unbindAppService();
+	private void onDoStop() {
 		serviceConnection.stopService();
 	}
 
