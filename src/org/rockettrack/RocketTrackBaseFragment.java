@@ -3,8 +3,11 @@ package org.rockettrack;
 import java.util.List;
 
 import org.rockettrack.util.ExponentialAverage;
+import org.rockettrack.util.Unit;
+import org.rockettrack.util.UnitConverter;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
@@ -17,16 +20,30 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-public abstract class RocketTrackBaseFragment extends Fragment implements SensorEventListener, LocationListener, GpsStatus.Listener{
+public abstract class RocketTrackBaseFragment
+extends Fragment
+implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 	private final static String TAG = "RocketTrackBaseFragment";
 
+	// Preferences names and default values
+	private static final String PREFS_KEY_UNIT_DISTANCE = "distUnitPref";
+	private static final String PREFS_KEY_UNIT_ALTITUDE = "altUnitPref";
+
+	// Some default values
+	private static final String PREFS_DEFAULT_UNIT_DISTANCE = Unit.meter.toString();
+	private static final String PREFS_DEFAULT_UNIT_ALTITUDE = Unit.meter.toString();
+
+	protected Unit unitDistance = Unit.meter;
+	protected Unit unitAltitude = Unit.meter;
+	
 	protected abstract void onRocketLocationChange();
 	protected abstract void onCompassChange();
 	protected abstract void onMyLocationChange();
@@ -79,6 +96,22 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 		return RocketTrackState.getInstance().getLocationDataAdapter().getLocationHistory();
 	}
 	
+	protected String getDistanceTo() {
+		if ( myLocation == null || rocketLocation == null ) {
+			return "";
+		}
+		float distanceMeters = myLocation.distanceTo(rocketLocation);
+		UnitConverter uc = new UnitConverter();
+		long distance = Math.round(uc.convert(Unit.meter, unitDistance, distanceMeters));
+		String distanceString = String.valueOf(distance);
+		if ( unitDistance == Unit.meter ) {
+			distanceString += "m";
+		} else {
+			distanceString += "f";
+		}
+		return distanceString;
+	}
+	
 	protected float getAzimuth() {
 		if ( accMagOrientation == null ) {
 			return 0f;
@@ -94,12 +127,12 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 		return azimuth;
 	}
 
-	protected Float getBearing() {
+	protected Integer getBearing() {
 		if ( rocketLocation == null || myLocation == null ) {
 			return null;
 		}
 		float rocketBearing = normalizeDegree(myLocation.bearingTo(getRocketLocation()));
-		return rocketBearing;
+		return Math.round(rocketBearing);
 	}
 
 	private float normalizeDegree(float value){
@@ -108,11 +141,6 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 		}else{
 			return 180 + (180 + value);
 		}	
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
 	}
 
 	@Override
@@ -153,7 +181,6 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 		RocketTrackState.getInstance().getLocationDataAdapter().registerDataSetObserver(mObserver);
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 
-
 		SensorManager sman = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
 
 		sman.registerListener(this,
@@ -163,7 +190,7 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 				sman.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
 				SensorManager.SENSOR_DELAY_UI);
 
-
+		getPreferences();
 	}
 
 	@Override
@@ -194,7 +221,7 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 
 		}
 
-		if ( event.timestamp > lastCompassTs + 100000000 /* .1s in nanoseconds */) {
+		if ( event.timestamp > lastCompassTs + 250000000 /* .25s in nanoseconds */) {
 			lastCompassTs = event.timestamp;
 			
 			float[] unmappedRotationMatrix = new float[9];
@@ -203,7 +230,7 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 			
 			WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
 			int currentOrientation = wm.getDefaultDisplay().getRotation();
-			Log.d(TAG,"current orientation " + currentOrientation);
+			//Log.d(TAG,"current orientation " + currentOrientation);
 			
 			switch ( currentOrientation ) {
 			case Surface.ROTATION_0:
@@ -275,6 +302,22 @@ public abstract class RocketTrackBaseFragment extends Fragment implements Sensor
 			Toast.makeText(getActivity(), strNewStatus, Toast.LENGTH_SHORT).show();
 			this.mPreviousState = status;
 		}
+	}
+
+	/**
+	 * 
+	 */
+	protected void getPreferences()
+	{
+		// Load preferences
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+		final String strUnitDistance = sharedPreferences.getString(PREFS_KEY_UNIT_DISTANCE, PREFS_DEFAULT_UNIT_DISTANCE);
+		unitDistance = Unit.getUnitForString(strUnitDistance);
+
+		final String strUnitAltitude = sharedPreferences.getString(PREFS_KEY_UNIT_ALTITUDE, PREFS_DEFAULT_UNIT_ALTITUDE);
+		unitAltitude = Unit.getUnitForString(strUnitAltitude);
+
 	}
 
 

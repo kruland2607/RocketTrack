@@ -27,14 +27,8 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 	private SharedPreferences mSharedPreferences;
 	private NavigationTarget mNavigationTarget = new NavigationTarget();
 
-	// Preferences names and default values
-	private static final String PREFS_KEY_UNIT_DISTANCE = "distUnitPref";
-	private static final String PREFS_KEY_UNIT_ALTITUDE = "altUnitPref";
 	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
 
-	// Some default values
-	private static final String PREFS_DEFAULT_UNIT_DISTANCE = Unit.meter.toString();
-	private static final String PREFS_DEFAULT_UNIT_ALTITUDE = Unit.meter.toString();
 	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
 
 	// Compass values
@@ -79,19 +73,11 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 		final boolean blnKeepScreenOn = this.mSharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
 		this.mCompassNaviView.setKeepScreenOn(blnKeepScreenOn);
 
+		this.mCompassNaviView.setUnitForDistance(unitDistance);
+		this.mCompassNaviView.setUnitForAltitude(unitAltitude);
+
 	}
 
-
-	/**
-	 * 
-	 */
-	@Override
-	public void onStart()
-	{
-		super.onStart();
-
-		this.getPreferences();
-	}
 
 	/**
 	 * 
@@ -160,39 +146,6 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 		}
 	}
 
-
-	/**
-	 * 
-	 */
-	private void getPreferences()
-	{
-		// Load preferences
-		this.mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-
-		final String strUnitDistance = this.mSharedPreferences.getString(PREFS_KEY_UNIT_DISTANCE, PREFS_DEFAULT_UNIT_DISTANCE);
-		final Unit unitDistance = this.getUnit(strUnitDistance);
-		this.mCompassNaviView.setUnitForDistance(unitDistance);
-
-		final String strUnitAltitude = this.mSharedPreferences.getString(PREFS_KEY_UNIT_ALTITUDE, PREFS_DEFAULT_UNIT_ALTITUDE);
-		final Unit unitAltitude = this.getUnit(strUnitAltitude);
-		this.mCompassNaviView.setUnitForAltitude(unitAltitude);
-
-	}
-
-	/**
-	 * 
-	 * @param unitSystem
-	 * @return
-	 */
-	private Unit getUnit(final String unitSystem)
-	{
-		Unit unit;
-		if (unitSystem.equalsIgnoreCase("metric"))
-			unit = Unit.meter;
-		else
-			unit = Unit.feet;
-		return unit;
-	}
 
 	/**
 	 * 

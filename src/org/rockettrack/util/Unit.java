@@ -8,5 +8,17 @@ package org.rockettrack.util;
 public enum Unit 
 {
 	meter,
-	feet	
+	feet;
+
+	public static Unit getUnitForString(final String unitSystem)
+	{
+		Unit unit;
+		if (unitSystem.equalsIgnoreCase("metric"))
+			unit = Unit.meter;
+		else
+			unit = Unit.feet;
+		return unit;
+	}
+
+
 }

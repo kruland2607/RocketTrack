@@ -64,7 +64,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 	private Polyline rocketPath;
 
 	// Data
-	private float rocketDistance = 0;
+	private String rocketDistance = "";
 	private double maxAltitude;
 
 	private boolean followMe = false;
@@ -153,7 +153,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 	@Override
 	protected void onCompassChange() {
-		Log.d(TAG,"onCompassChange");
+		//Log.d(TAG,"onCompassChange");
 		updateBearing();
 	}
 
@@ -193,7 +193,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 		}
 
-		Float rocketBearing = getBearing();
+		Integer rocketBearing = getBearing();
 		if ( rocketBearing != null ) {
 			TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
 			lblBearing.setText("Bearing: " + rocketBearing );
@@ -238,7 +238,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 		//myLoc = null when the android gps is not initialized yet.
 		if(myLoc == null)
 		{
-			rocketDistance = 0;
+			rocketDistance = "";
 			return;
 		}
 
@@ -246,9 +246,9 @@ public class MapFragment extends RocketTrackBaseFragment {
 		updateBearing();
 
 		//Rocket Distance
-		rocketDistance = myLoc.distanceTo(rocketLocation);
+		rocketDistance = this.getDistanceTo();
 		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
-		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
+		lblDistance.setText("Rocket Distance: " + rocketDistance );
 
 		//Max Altitude
 		double altitude = rocketLocation.getAltitude();// - myLoc.getAltitude();
@@ -282,9 +282,9 @@ public class MapFragment extends RocketTrackBaseFragment {
 		LatLng myPosition = new LatLng(myLocation.getLatitude(),myLocation.getLongitude());
 
 		//Rocket Distance
-		rocketDistance = myLocation.distanceTo(rocketLocation);
+		rocketDistance = this.getDistanceTo();
 		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
-		lblDistance.setText("Rocket Distance: " + rocketDistance + "m");
+		lblDistance.setText("Rocket Distance: " + rocketDistance );
 
 		//Draw line between myPosition and Rocket
 

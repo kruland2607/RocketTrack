@@ -27,6 +27,8 @@ public class UnitConverter
 	{
 		this.mUnitConversionFactors = new Hashtable<String, Double>();
 		// Add some conversion factors
+		this.addConversionFactor(Unit.meter, Unit.meter, 1.0);
+		this.addConversionFactor(Unit.feet, Unit.feet, 1.0);
 		this.addConversionFactor(Unit.meter, Unit.feet, 3.2808);
 		this.addConversionFactor(Unit.feet, Unit.meter, 1.0/3.2808);
 	}
