@@ -53,7 +53,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class MapFragment extends RocketTrackBaseFragment {
 
 	private final static String TAG ="MapFragment";
-	
+
 	// Map reference
 	private GoogleMap mMap;
 
@@ -111,7 +111,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 		rocketLine = null;
 		rocketPath = null;
 	}
-	
+
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView(); 
@@ -129,7 +129,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 	@Override
 	public void onMyLocationChange() {
 		Log.d(TAG,"onLocationChagned");
-		
+
 		Location location = getMyLocation();
 		if(mMap == null)
 			return;
@@ -150,7 +150,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 	}
 
-	
+
 	@Override
 	protected void onCompassChange() {
 		Log.d(TAG,"onCompassChange");
@@ -192,37 +192,42 @@ public class MapFragment extends RocketTrackBaseFragment {
 			CameraPosition camPos = new CameraPosition.Builder(mMap.getCameraPosition()).bearing(heading).zoom(20).build();
 			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 		}
-		
+
 		Float rocketBearing = getBearing();
 		if ( rocketBearing != null ) {
 			TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
 			lblBearing.setText("Bearing: " + rocketBearing );
 		}
 	}
-	
+
 
 	@Override
 	protected void onRocketLocationChange() {
 		if (mMap == null ) {
 			return;
 		}
-		
+
 		Location rocketLocation = getRocketLocation();
-		
+
 		if(rocketLocation == null)
 			return;
 
 		LatLng rocketPosition = new LatLng(rocketLocation.getLatitude(), rocketLocation.getLongitude());
-		
+
 		//Draw marker at Rocket position
 		if(rocketMarker == null) {
-			BitmapDescriptor rocketIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_stat_notify_icon);
+			BitmapDescriptor rocketIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_rocket_map);
 			rocketMarker = mMap.addMarker(new MarkerOptions().anchor(0.5f, 0.5f).position(rocketPosition).icon(rocketIcon));
 		} else {
 			rocketMarker.setPosition(rocketPosition);
 		}
 		if ( rocketCircle == null ) {
-			CircleOptions options = new CircleOptions().center( rocketPosition ).radius( rocketLocation.getAccuracy() );
+			CircleOptions options = new CircleOptions()
+			.center( rocketPosition )
+			.radius( rocketLocation.getAccuracy() )
+			.strokeColor(Color.RED)
+			.strokeWidth(1.0f)
+			.fillColor(Color.RED & 0x22FFFFFF);
 			rocketCircle = mMap.addCircle(options);
 		} else {
 			rocketCircle.setCenter(rocketPosition);
