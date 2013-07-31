@@ -281,7 +281,6 @@ public class AppService extends Service {
 			switch (msg.what) {
 			case MSG_CONNECTED:
 				Log.d(TAG, "Connected to device");
-				RocketTrackState.getInstance().clear();
 				s.connected();
 				break;
 			case MSG_CONNECT_FAILED:

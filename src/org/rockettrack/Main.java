@@ -195,6 +195,7 @@ public class Main extends FragmentActivity {
 		// Get the BluetoothDevice object
 		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
 		Log.d(TAG, "Connecting to " + device.getName());
+		RocketTrackState.getInstance().clear();
 		serviceConnection.getService().connectToRocketTracker(device);
 	}
 
@@ -233,9 +234,11 @@ public class Main extends FragmentActivity {
 			BluetoothDevice d = (BluetoothDevice) b.getParcelable(BroadcastIntents.DEVICE);
 			switch( state ) {
 			case AppService.STATE_CONNECTED:
+				RocketTrackState.getInstance().getRawDataAdapter().addRawData("Connected to rx");
 				onDeviceConnected(d);
 				break;
 			case AppService.STATE_CONNECT_FAILED:
+				RocketTrackState.getInstance().getRawDataAdapter().addRawData("Connection to rx lost");
 				onDeviceReconnect(d);
 				break;
 			}

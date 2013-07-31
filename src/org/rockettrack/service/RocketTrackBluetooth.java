@@ -151,6 +151,11 @@ public class RocketTrackBluetooth implements Runnable {
 					}
 					input = null;
 					output = null;
+					// Sleep a little bit to prevent hogging all kinds of resources.
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException ex) {
+					}
 					RocketTrackBluetooth.this.notifyAll();
 					handler.obtainMessage(AppService.MSG_CONNECT_FAILED).sendToTarget();
 					if (D) Log.e(TAG, "ConnectThread: Failed to establish connection");
