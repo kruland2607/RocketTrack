@@ -7,9 +7,14 @@ package org.rockettrack.util;
  */
 public enum Unit 
 {
-	meter,
-	feet;
+	meter("m"),
+	feet("ft");
 
+	private Unit( String abbreviation ) {
+		this.abbreviation = abbreviation;
+	}
+	public final String abbreviation;
+	
 	public static Unit getUnitForString(final String unitSystem)
 	{
 		Unit unit;
