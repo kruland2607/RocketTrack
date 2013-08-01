@@ -21,6 +21,9 @@ package org.rockettrack;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rockettrack.util.Unit;
+import org.rockettrack.util.UnitConverter;
+
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
@@ -255,8 +258,11 @@ public class MapFragment extends RocketTrackBaseFragment {
 		if(altitude > maxAltitude)
 			maxAltitude = altitude;
 		TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.lblMaxAltitude);
-		lblMaxAltitude.setText("Max Altitude: " + maxAltitude + "m");
-
+		{
+			Double tmpMaxAlt = new UnitConverter().convert(Unit.meter, unitAltitude, maxAltitude);
+			String maxAltString = String.valueOf(Math.round(tmpMaxAlt)) + unitAltitude.abbreviation;
+			lblMaxAltitude.setText("Max Altitude: " + maxAltString);
+		}
 		//Draw line between myPosition and Rocket
 		LatLng myPosition = new LatLng(myLoc.getLatitude(),myLoc.getLongitude());
 
