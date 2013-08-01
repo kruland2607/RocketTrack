@@ -55,7 +55,7 @@ public class Parser {
 			}
 			
 			// Check sanity.  If we haven't received a fix, don't use it.
-			if( fixString == "" || fixString == "0" ) {
+			if( "".equals(fixString) || "0".equals(fixString) ) {
 				return null;
 			}
 			return l;
