@@ -24,12 +24,8 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 	private final static String TAG = "CompassNaviFragment";
 
 	private CompassNaviView mCompassNaviView;
-	private SharedPreferences mSharedPreferences;
 	private NavigationTarget mNavigationTarget = new NavigationTarget();
 
-	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
-
-	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
 
 	// Compass values
 	float[] inR = new float[16];
@@ -68,10 +64,6 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 	public void onResume()
 	{
 		super.onResume();
-
-		// Set keep screen on property
-		final boolean blnKeepScreenOn = this.mSharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
-		this.mCompassNaviView.setKeepScreenOn(blnKeepScreenOn);
 
 		this.mCompassNaviView.setUnitForDistance(unitDistance);
 		this.mCompassNaviView.setUnitForAltitude(unitAltitude);

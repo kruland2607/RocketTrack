@@ -22,7 +22,6 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -36,10 +35,12 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	// Preferences names and default values
 	private static final String PREFS_KEY_UNIT_DISTANCE = "distUnitPref";
 	private static final String PREFS_KEY_UNIT_ALTITUDE = "altUnitPref";
+	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
 
 	// Some default values
 	private static final String PREFS_DEFAULT_UNIT_DISTANCE = Unit.meter.toString();
 	private static final String PREFS_DEFAULT_UNIT_ALTITUDE = Unit.meter.toString();
+	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
 
 	protected Unit unitDistance = Unit.meter;
 	protected Unit unitAltitude = Unit.meter;
@@ -103,12 +104,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		float distanceMeters = myLocation.distanceTo(rocketLocation);
 		UnitConverter uc = new UnitConverter();
 		long distance = Math.round(uc.convert(Unit.meter, unitDistance, distanceMeters));
-		String distanceString = String.valueOf(distance);
-		if ( unitDistance == Unit.meter ) {
-			distanceString += "m";
-		} else {
-			distanceString += "f";
-		}
+		String distanceString = String.valueOf(distance) + unitDistance.abbreviation;
 		return distanceString;
 	}
 	
@@ -317,6 +313,11 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 		final String strUnitAltitude = sharedPreferences.getString(PREFS_KEY_UNIT_ALTITUDE, PREFS_DEFAULT_UNIT_ALTITUDE);
 		unitAltitude = Unit.getUnitForString(strUnitAltitude);
+
+		// Set keep screen on property
+		final boolean blnKeepScreenOn = sharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
+		this.getView().setKeepScreenOn(blnKeepScreenOn);
+
 
 	}
 
