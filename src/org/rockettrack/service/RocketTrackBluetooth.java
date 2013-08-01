@@ -163,6 +163,7 @@ public class RocketTrackBluetooth implements Runnable {
 				}
 
 				input_thread = new Thread(RocketTrackBluetooth.this);
+				input_thread.setName("input_thread");
 				input_thread.start();
 
 				// Let TelemetryService know we're connected
