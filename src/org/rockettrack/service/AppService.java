@@ -211,6 +211,7 @@ public class AppService extends Service {
 		String text = getText(R.string.telemetry_service_connecting).toString();
 		text += " " + device.getName();
 		notificationBuilder.setContentText(text);
+		notificationBuilder.setProgress(0, 0, true);
 		updateNotification();
 
 		if (mAltosBluetooth == null) {
@@ -263,6 +264,7 @@ public class AppService extends Service {
 		String text = getText(R.string.telemetry_service_connected).toString();
 		text += " " + device.getName();
 		notificationBuilder.setContentText(text);
+		notificationBuilder.setProgress(0, 0, false);
 		updateNotification();
 		
 		setState(STATE_CONNECTED);
