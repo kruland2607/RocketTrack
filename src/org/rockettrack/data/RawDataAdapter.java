@@ -3,7 +3,6 @@ package org.rockettrack.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
@@ -17,6 +16,7 @@ public class RawDataAdapter extends BaseAdapter implements Adapter {
 
 	public void clear() {
 		lines.clear();
+		this.notifyDataSetChanged();
 	}
 	
 	@Override

@@ -23,6 +23,7 @@ public class LocationDataAdapter extends BaseAdapter {
 		lastTime = 0;
 		currentRocketPosition = null;
 		locationHistory.clear();
+		this.notifyDataSetChanged();
 	}
 	
 	public Location getRocketPosition() {
