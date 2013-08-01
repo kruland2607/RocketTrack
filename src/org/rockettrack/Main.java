@@ -192,10 +192,18 @@ public class Main extends FragmentActivity {
 	}
 
 	private void connectDevice(String macAddress) {
+		
+		// forget the old value used.
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor prefEditor = prefs.edit();
+		prefEditor.putString(PREFERED_DEVICE_KEY,"");
+		prefEditor.commit();
+
 		// Get the BluetoothDevice object
 		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
 		Log.d(TAG, "Connecting to " + device.getName());
 		RocketTrackState.getInstance().clear();
+		serviceConnection.startService();
 		serviceConnection.getService().connectToRocketTracker(device);
 	}
 
@@ -256,7 +264,7 @@ public class Main extends FragmentActivity {
 	}
 	
 	private void onDeviceReconnect( BluetoothDevice device ) {
-		Toast.makeText(this, "Failed to connect to " + device.getName() + ".  Reconnecting", Toast.LENGTH_LONG).show();
+		Toast.makeText(this, "Failed to connect to " + device.getName() + ".  Reconnecting", Toast.LENGTH_SHORT).show();
 		Log.d(TAG, "Reconnect to " + device.getName());
 		serviceConnection.getService().connectToRocketTracker(device);
 	}
