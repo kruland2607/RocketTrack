@@ -1,28 +1,26 @@
 package org.rockettrack.service;
 
 import java.lang.ref.WeakReference;
-import java.util.Calendar;
 
 import org.rockettrack.Main;
 import org.rockettrack.R;
 import org.rockettrack.RocketTrackState;
 import org.rockettrack.nmea.Parser;
 
-import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -38,6 +36,7 @@ public class AppService extends Service {
 	// Unique Identification Number for the Notification.
 	// We use it on Notification start, and to cancel it.
 	private final static int NOTIFICATION = R.string.telemetry_service_label;
+	NotificationCompat.Builder notificationBuilder;
 
 	private static boolean running = false;
 
@@ -156,20 +155,21 @@ public class AppService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		// The PendingIntent to launch our activity if the user selects this notification
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, Main.class), 0);
+
 		CharSequence text = getText(R.string.telemetry_service_started);
 
 		// Create notification to be displayed while the service runs
-		Notification notification = new Notification(R.drawable.ic_stat_notify_icon, text, 0);
-
-		// The PendingIntent to launch our activity if the user selects this notification
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, Main.class), 0);
-
-		// Set the info for the views that show in the notification panel.
-		notification.setLatestEventInfo(this, getText(R.string.telemetry_service_label), text, contentIntent);
-
-		// Set the notification to be in the "Ongoing" section.
-		notification.flags |= Notification.FLAG_ONGOING_EVENT;
+		notificationBuilder = new NotificationCompat.Builder( this );
+		notificationBuilder.setSmallIcon(R.drawable.ic_stat_notify_icon);
+		notificationBuilder.setTicker(text);
+		notificationBuilder.setContentTitle(getText(R.string.telemetry_service_label));
+		notificationBuilder.setContentText(text);
+		notificationBuilder.setOngoing(true);
+		notificationBuilder.setContentIntent(contentIntent);
+		
+		Notification notification = notificationBuilder.build();
 
 		// Move us into the foreground.
 		startForeground(NOTIFICATION, notification);
@@ -208,6 +208,11 @@ public class AppService extends Service {
 			stopAltosBluetooth();
 		}
 
+		String text = getText(R.string.telemetry_service_connecting).toString();
+		text += " " + device.getName();
+		notificationBuilder.setContentText(text);
+		updateNotification();
+
 		if (mAltosBluetooth == null) {
 			Log.d(TAG,"Device = " + String.valueOf(device));
 			Log.d(TAG, String.format("startAltosBluetooth(): Connecting to %s (%s)", device.getName(), device.getAddress()));
@@ -215,6 +220,7 @@ public class AppService extends Service {
 			mAltosBluetooth = new RocketTrackBluetooth(device, mHandler);
 			setState(STATE_CONNECTING);
 		}
+		
 	}
 
 	public void stopService() {
@@ -254,6 +260,11 @@ public class AppService extends Service {
 			return;
 		}
 
+		String text = getText(R.string.telemetry_service_connected).toString();
+		text += " " + device.getName();
+		notificationBuilder.setContentText(text);
+		updateNotification();
+		
 		setState(STATE_CONNECTED);
 
 		// Send setup commands: 
@@ -316,4 +327,9 @@ public class AppService extends Service {
 		}
 	}
 
+	private void updateNotification() {
+		NotificationManager mgr = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mgr.notify(NOTIFICATION, notificationBuilder.build());
+	}
+	
 }

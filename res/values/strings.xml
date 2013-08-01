@@ -24,6 +24,8 @@
 
     <!-- Service -->
     <string name="telemetry_service_label">RocketTrack Telemetry Service</string>
+    <string name="telemetry_service_connecting">Connecting to</string>
+    <string name="telemetry_service_connected">Connected to</string>
     <string name="telemetry_service_started">RocketTrack Telemetry Service Started</string>
     <string name="telemetry_service_stopped">RocketTrack Telemetry Service Stopped</string>
 
