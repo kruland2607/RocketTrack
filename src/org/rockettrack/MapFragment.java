@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.rockettrack.util.Unit;
 import org.rockettrack.util.UnitConverter;
+import org.rockettrack.views.CoordinateHelper;
 
 import android.graphics.Color;
 import android.location.Location;
@@ -68,7 +69,6 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 	// Data
 	private String rocketDistance = "";
-	private double maxAltitude;
 
 	private boolean followMe = false;
 
@@ -143,6 +143,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 		if( rocketLocation != null ){
 			LatLng rocketPosition = new LatLng(rocketLocation.getLatitude(), rocketLocation.getLongitude());
 			updateRocketLine(location,rocketPosition);
+			updateBearing();
 		}
 
 		if ( followMe ) {
@@ -198,8 +199,8 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 		Integer rocketBearing = getBearing();
 		if ( rocketBearing != null ) {
-			TextView lblBearing = (TextView) getView().findViewById(R.id.TextView01);
-			lblBearing.setText("Bearing: " + rocketBearing );
+			TextView lblBearing = (TextView) getView().findViewById(R.id.Bearing);
+			lblBearing.setText(String.valueOf(rocketBearing));
 		}
 	}
 
@@ -245,25 +246,39 @@ public class MapFragment extends RocketTrackBaseFragment {
 			return;
 		}
 
-		//update camera
 		updateBearing();
+
+		// Lat & Lon
+		{
+			final CoordinateHelper coordinateHelper = new CoordinateHelper(rocketLocation.getLatitude(), rocketLocation.getLongitude());
+			TextView lat = (TextView) getView().findViewById(R.id.Latitude);
+			lat.setText(coordinateHelper.getLatitudeString());
+			TextView lon = (TextView) getView().findViewById(R.id.Longitude);
+			lon.setText(coordinateHelper.getLongitudeString());
+		}
 
 		//Rocket Distance
 		rocketDistance = this.getDistanceTo();
-		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
-		lblDistance.setText("Rocket Distance: " + rocketDistance );
+		TextView lblDistance = (TextView) getView().findViewById(R.id.Distance);
+		lblDistance.setText(rocketDistance );
 
 		//Max Altitude
-		double altitude = rocketLocation.getAltitude();// - myLoc.getAltitude();
-		if(altitude > maxAltitude)
-			maxAltitude = altitude;
-		TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.lblMaxAltitude);
 		{
-			Double tmpMaxAlt = new UnitConverter().convert(Unit.meter, unitAltitude, maxAltitude);
+			UnitConverter converter = new UnitConverter();
+			double altitude = rocketLocation.getAltitude();
+
+			TextView alt = (TextView) getView().findViewById(R.id.Altitude);
+			altitude = converter.convert(Unit.meter, unitAltitude, altitude);
+			String altString = String.valueOf(Math.round(altitude)) + unitAltitude.abbreviation;
+			alt.setText(altString);
+
+			TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.MaxAlt);
+			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
+			Double tmpMaxAlt = converter.convert(Unit.meter, unitAltitude, maxAltitude);
 			String maxAltString = String.valueOf(Math.round(tmpMaxAlt)) + unitAltitude.abbreviation;
-			lblMaxAltitude.setText("Max Altitude: " + maxAltString);
+			lblMaxAltitude.setText(maxAltString);
 		}
-		//Draw line between myPosition and Rocket
+		
 		LatLng myPosition = new LatLng(myLoc.getLatitude(),myLoc.getLongitude());
 
 		List<Location> rocketLocationHistory = getRocketLocationHistory();
@@ -278,6 +293,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 			rocketPath.setPoints(rocketPosList);
 		}
 
+		//Draw line between myPosition and Rocket
 		updateRocketLine(rocketLocation,rocketPosition);
 	}
 
@@ -286,11 +302,6 @@ public class MapFragment extends RocketTrackBaseFragment {
 			return;
 		Location myLocation = getMyLocation();
 		LatLng myPosition = new LatLng(myLocation.getLatitude(),myLocation.getLongitude());
-
-		//Rocket Distance
-		rocketDistance = this.getDistanceTo();
-		TextView lblDistance = (TextView) getView().findViewById(R.id.lblDistance);
-		lblDistance.setText("Rocket Distance: " + rocketDistance );
 
 		//Draw line between myPosition and Rocket
 

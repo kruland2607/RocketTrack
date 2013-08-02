@@ -13,6 +13,7 @@ import android.widget.BaseAdapter;
 public class LocationDataAdapter extends BaseAdapter {
 
 	private long lastTime = 0;
+	private double maxAltitude = 0d;
 	private Location currentRocketPosition;
 	private final List<Location> locationHistory = new ArrayList<Location>(300);
 	
@@ -30,6 +31,10 @@ public class LocationDataAdapter extends BaseAdapter {
 		return currentRocketPosition;
 	}
 	
+	public Double getMaxAltitude() {
+		return maxAltitude;
+	}
+	
 	public List<Location> getLocationHistory() {
 		return Collections.unmodifiableList(locationHistory);
 	}
@@ -38,19 +43,28 @@ public class LocationDataAdapter extends BaseAdapter {
 		locationHistory.add(rocketPosition);
 		long currentTime = System.currentTimeMillis();
 		if ( lastTime == 0 || currentTime - lastTime > minTime ) {
-			this.lastTime = currentTime;
-			this.currentRocketPosition = rocketPosition;
-			this.notifyDataSetChanged();
+			updateCurrentLocation( currentTime, rocketPosition);
 		} else {
 			float distance = this.currentRocketPosition.distanceTo(rocketPosition);
 			if ( distance >= minDistance) {
-				this.lastTime = currentTime;
-				this.currentRocketPosition = rocketPosition;
-				this.notifyDataSetChanged();
+				updateCurrentLocation( currentTime, rocketPosition);
 			}
 		}
 	}
 
+	private void updateCurrentLocation( long timestamp, Location rocketPosition ) {
+	
+		this.lastTime = timestamp;
+		this.currentRocketPosition = rocketPosition;
+
+		double altitude = rocketPosition.getAltitude();
+		if(altitude > maxAltitude)
+			maxAltitude = altitude;
+
+		this.notifyDataSetChanged();
+
+	}
+	
 	@Override
 	public int getCount() {
 		return 0;
