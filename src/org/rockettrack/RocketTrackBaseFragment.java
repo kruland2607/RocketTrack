@@ -1,6 +1,5 @@
 package org.rockettrack;
 
-import java.util.Currency;
 import java.util.List;
 
 import org.rockettrack.util.ExponentialAverage;
@@ -49,12 +48,12 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	protected Unit unitDistance = Unit.meter;
 	protected Unit unitAltitude = Unit.meter;
 	
-	private TextView lblDistance;
-	private TextView alt;
-	private TextView lblMaxAltitude;
-	private TextView lblBearing;
-	private TextView lat;
-	private TextView lon;
+	private TextView distanceView;
+	private TextView altView;
+	private TextView maxAltView;
+	private TextView bearingView;
+	private TextView latView;
+	private TextView lonView;
 
 	protected abstract void onRocketLocationChange();
 	protected abstract void onCompassChange();
@@ -151,12 +150,12 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		lblDistance = (TextView) getView().findViewById(R.id.Distance);
-		alt = (TextView) getView().findViewById(R.id.Altitude);
-		lblMaxAltitude = (TextView) getView().findViewById(R.id.MaxAlt);
-		lblBearing = (TextView) getView().findViewById(R.id.Bearing);
-		lat = (TextView) getView().findViewById(R.id.Latitude);
-		lon = (TextView) getView().findViewById(R.id.Longitude);
+		distanceView = (TextView) getView().findViewById(R.id.Distance);
+		altView = (TextView) getView().findViewById(R.id.Altitude);
+		maxAltView = (TextView) getView().findViewById(R.id.MaxAlt);
+		bearingView = (TextView) getView().findViewById(R.id.Bearing);
+		latView = (TextView) getView().findViewById(R.id.Latitude);
+		lonView = (TextView) getView().findViewById(R.id.Longitude);
 	}
 	
 	@Override
@@ -342,20 +341,20 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 	private void updateBearingAndDistance() {
 		if ( myLocation == null || rocketLocation == null ) {
-			lblBearing.setText("");
-			lblDistance.setText("");
+			bearingView.setText("");
+			distanceView.setText("");
 			return;
 		}
 		
 		Integer rocketBearing = getBearing();
 		if ( rocketBearing != null ) {
-			lblBearing.setText(String.valueOf(rocketBearing));
+			bearingView.setText(String.valueOf(rocketBearing));
 		}
 
 		//Rocket Distance
 		String rocketDistance = this.getDistanceTo();
 		//TextView lblDistance = (TextView) getView().findViewById(R.id.Distance);
-		lblDistance.setText(rocketDistance );
+		distanceView.setText(rocketDistance );
 
 	}
 	
@@ -363,11 +362,18 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 		updateBearingAndDistance();
 
+		if ( rocketLocation == null ) {
+			latView.setText("");
+			lonView.setText("");
+			altView.setText("");
+			maxAltView.setText("");
+		}
+		
 		// Lat & Lon
 		{
 			final CoordinateHelper coordinateHelper = new CoordinateHelper(rocketLocation.getLatitude(), rocketLocation.getLongitude());
-			lat.setText(coordinateHelper.getLatitudeString());
-			lon.setText(coordinateHelper.getLongitudeString());
+			latView.setText(coordinateHelper.getLatitudeString());
+			lonView.setText(coordinateHelper.getLongitudeString());
 		}
 
 		//Max Altitude
@@ -375,11 +381,11 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			double altitude = rocketLocation.getAltitude();
 
 			String altString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, altitude, "#");
-			alt.setText(altString);
+			altView.setText(altString);
 
 			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
 			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, maxAltitude, "#");
-			lblMaxAltitude.setText(maxAltString);
+			maxAltView.setText(maxAltString);
 		}
 		
 		RocketTrackBaseFragment.this.onRocketLocationChange();
