@@ -367,6 +367,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			lonView.setText("");
 			altView.setText("");
 			maxAltView.setText("");
+			return;
 		}
 		
 		// Lat & Lon
