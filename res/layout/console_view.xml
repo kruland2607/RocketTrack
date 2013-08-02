@@ -1,20 +1,29 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
+    android:orientation="vertical" >
 
-    <include android:layout_width="match_parent"
+    <include
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        layout="@layout/info_overlay"/>
-    
+        layout="@layout/info_overlay" />
+
     <org.rockettrack.views.ConsoleOutputView
         android:id="@+id/console"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
         android:keepScreenOn="true"
         android:textColor="#33b5e5"
         android:textSize="9sp"
-        android:textStyle="bold"/>
+        android:textStyle="bold" />
+
+    <ToggleButton
+        android:id="@+id/chkPause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="false"
+        android:textOff="Pause"
+        android:textOn="Pause" />
 
 </LinearLayout>
