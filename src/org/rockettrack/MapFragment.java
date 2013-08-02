@@ -21,10 +21,6 @@ package org.rockettrack;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rockettrack.util.Unit;
-import org.rockettrack.util.UnitConverter;
-import org.rockettrack.views.CoordinateHelper;
-
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
@@ -36,7 +32,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -66,9 +61,6 @@ public class MapFragment extends RocketTrackBaseFragment {
 	private Circle rocketCircle;
 	private Polyline rocketLine;
 	private Polyline rocketPath;
-
-	// Data
-	private String rocketDistance = "";
 
 	private boolean followMe = false;
 
@@ -197,11 +189,6 @@ public class MapFragment extends RocketTrackBaseFragment {
 			mMap.moveCamera(CameraUpdateFactory.newCameraPosition(camPos));
 		}
 
-		Integer rocketBearing = getBearing();
-		if ( rocketBearing != null ) {
-			TextView lblBearing = (TextView) getView().findViewById(R.id.Bearing);
-			lblBearing.setText(String.valueOf(rocketBearing));
-		}
 	}
 
 
@@ -238,45 +225,7 @@ public class MapFragment extends RocketTrackBaseFragment {
 			rocketCircle.setRadius( rocketLocation.getAccuracy() );
 		}
 
-		Location myLoc = getMyLocation();
-		//myLoc = null when the android gps is not initialized yet.
-		if(myLoc == null)
-		{
-			rocketDistance = "";
-			return;
-		}
-
 		updateBearing();
-
-		// Lat & Lon
-		{
-			final CoordinateHelper coordinateHelper = new CoordinateHelper(rocketLocation.getLatitude(), rocketLocation.getLongitude());
-			TextView lat = (TextView) getView().findViewById(R.id.Latitude);
-			lat.setText(coordinateHelper.getLatitudeString());
-			TextView lon = (TextView) getView().findViewById(R.id.Longitude);
-			lon.setText(coordinateHelper.getLongitudeString());
-		}
-
-		//Rocket Distance
-		rocketDistance = this.getDistanceTo();
-		TextView lblDistance = (TextView) getView().findViewById(R.id.Distance);
-		lblDistance.setText(rocketDistance );
-
-		//Max Altitude
-		{
-			double altitude = rocketLocation.getAltitude();
-
-			TextView alt = (TextView) getView().findViewById(R.id.Altitude);
-			String altString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, altitude, "#");
-			alt.setText(altString);
-
-			TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.MaxAlt);
-			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
-			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, maxAltitude, "#");
-			lblMaxAltitude.setText(maxAltString);
-		}
-		
-		LatLng myPosition = new LatLng(myLoc.getLatitude(),myLoc.getLongitude());
 
 		List<Location> rocketLocationHistory = getRocketLocationHistory();
 		if ( rocketLocationHistory != null && rocketLocationHistory.size() > 0 ) {

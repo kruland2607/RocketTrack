@@ -1,10 +1,16 @@
-<LinearLayout android:layout_width="fill_parent" 
-android:layout_height="fill_parent" 
-xmlns:android="http://schemas.android.com/apk/res/android">
-  
-  <org.rockettrack.views.CompassNaviView
-    android:id="@+id/CompassNaviView"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" />
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/info_overlay" />
+
+    <org.rockettrack.views.CompassNaviView
+        android:id="@+id/CompassNaviView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
 
 </LinearLayout>

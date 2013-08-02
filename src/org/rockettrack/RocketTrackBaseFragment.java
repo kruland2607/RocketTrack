@@ -1,10 +1,12 @@
 package org.rockettrack;
 
+import java.util.Currency;
 import java.util.List;
 
 import org.rockettrack.util.ExponentialAverage;
 import org.rockettrack.util.Unit;
 import org.rockettrack.util.UnitConverter;
+import org.rockettrack.views.CoordinateHelper;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -23,7 +25,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.Surface;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public abstract class RocketTrackBaseFragment
@@ -45,6 +49,13 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	protected Unit unitDistance = Unit.meter;
 	protected Unit unitAltitude = Unit.meter;
 	
+	private TextView lblDistance;
+	private TextView alt;
+	private TextView lblMaxAltitude;
+	private TextView lblBearing;
+	private TextView lat;
+	private TextView lon;
+
 	protected abstract void onRocketLocationChange();
 	protected abstract void onCompassChange();
 	protected abstract void onMyLocationChange();
@@ -138,6 +149,17 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	}
 
 	@Override
+	public void onViewCreated(View view, Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		lblDistance = (TextView) getView().findViewById(R.id.Distance);
+		alt = (TextView) getView().findViewById(R.id.Altitude);
+		lblMaxAltitude = (TextView) getView().findViewById(R.id.MaxAlt);
+		lblBearing = (TextView) getView().findViewById(R.id.Bearing);
+		lat = (TextView) getView().findViewById(R.id.Latitude);
+		lon = (TextView) getView().findViewById(R.id.Longitude);
+	}
+	
+	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -159,16 +181,14 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		mObserver = new DataSetObserver() {
 			@Override
 			public void onChanged() {
-				rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 				//Log.d(TAG,"DataSetObserver.onChanged()");
-				RocketTrackBaseFragment.this.onRocketLocationChange();
+				updateRocketLocation();
 			}
 
 			@Override
 			public void onInvalidated() {
-				rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 				//Log.d(TAG,"DataSetObserver.onInvalidated()");
-				RocketTrackBaseFragment.this.onRocketLocationChange();
+				updateRocketLocation();
 			}
 		};
 
@@ -242,6 +262,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			}
 			SensorManager.getOrientation(rotationMatrix, accMagOrientation);
 
+			updateBearingAndDistance();
 			onCompassChange();
 		}
 
@@ -267,6 +288,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 				Double.valueOf(location.getAltitude()).floatValue(),
 				System.currentTimeMillis()
 				);
+		updateBearingAndDistance();
 		this.onMyLocationChange();
 	}
 
@@ -316,8 +338,53 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		final boolean blnKeepScreenOn = sharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
 		this.getView().setKeepScreenOn(blnKeepScreenOn);
 
-
 	}
 
+	private void updateBearingAndDistance() {
+		if ( myLocation == null || rocketLocation == null ) {
+			lblBearing.setText("");
+			lblDistance.setText("");
+			return;
+		}
+		
+		Integer rocketBearing = getBearing();
+		if ( rocketBearing != null ) {
+			lblBearing.setText(String.valueOf(rocketBearing));
+		}
+
+		//Rocket Distance
+		String rocketDistance = this.getDistanceTo();
+		//TextView lblDistance = (TextView) getView().findViewById(R.id.Distance);
+		lblDistance.setText(rocketDistance );
+
+	}
+	
+	private void updateRocketLocation() {
+		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
+		updateBearingAndDistance();
+
+		// Lat & Lon
+		{
+			final CoordinateHelper coordinateHelper = new CoordinateHelper(rocketLocation.getLatitude(), rocketLocation.getLongitude());
+			lat.setText(coordinateHelper.getLatitudeString());
+			lon.setText(coordinateHelper.getLongitudeString());
+		}
+
+		//Max Altitude
+		{
+			double altitude = rocketLocation.getAltitude();
+
+			String altString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, altitude, "#");
+			alt.setText(altString);
+
+			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
+			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, maxAltitude, "#");
+			lblMaxAltitude.setText(maxAltString);
+		}
+		
+		RocketTrackBaseFragment.this.onRocketLocationChange();
+
+
+	}
 
 }

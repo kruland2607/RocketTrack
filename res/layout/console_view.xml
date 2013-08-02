@@ -1,8 +1,13 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     >
 
+    <include android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/info_overlay"/>
+    
     <org.rockettrack.views.ConsoleOutputView
         android:id="@+id/console"
         android:layout_width="match_parent"
@@ -12,4 +17,4 @@
         android:textSize="9sp"
         android:textStyle="bold"/>
 
-</FrameLayout>
+</LinearLayout>
