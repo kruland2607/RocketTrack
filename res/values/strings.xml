@@ -36,5 +36,7 @@
     <string name="pref_keep_screen_on_summary">Disables screen saver</string>
     <string name="pref_unit_description">Select metric or US settings</string>
     <string name="pref_units">Units</string>
+    <string name="pref_agl">AGL</string>
+    <string name="pref_agl_description">Display altitude as AGL</string>
 
 </resources>

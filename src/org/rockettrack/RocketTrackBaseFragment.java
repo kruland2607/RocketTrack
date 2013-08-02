@@ -38,12 +38,15 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	// Preferences names and default values
 	private static final String PREFS_KEY_UNIT_DISTANCE = "unitPref";
 	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
+	private static final String PREFS_KEY_AGL = "aglPref";
 
 	// Some default values
 	private static final String PREFS_DEFAULT_UNIT = Unit.meter.toString();
 	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
+	private static final boolean PREFS_DEFAULT_AGL = true;
 
 	protected Unit unitDistance = Unit.meter;
+	protected boolean useAgl = true;
 	
 	private TextView distanceView;
 	private TextView altView;
@@ -330,6 +333,9 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		// Set keep screen on property
 		final boolean blnKeepScreenOn = sharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
 		this.getView().setKeepScreenOn(blnKeepScreenOn);
+		
+		// Load the agl pref
+		useAgl = sharedPreferences.getBoolean(PREFS_KEY_AGL, PREFS_DEFAULT_AGL);
 
 	}
 
@@ -374,11 +380,16 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		//Max Altitude
 		{
 			double altitude = rocketLocation.getAltitude();
-
+			if( useAgl ) {
+				altitude -= myLocation.getAltitude();
+			}
 			String altString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, altitude, "#");
 			altView.setText(altString);
 
 			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
+			if( useAgl ) {
+				maxAltitude -= myLocation.getAltitude();
+			}
 			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, maxAltitude, "#");
 			maxAltView.setText(maxAltString);
 		}
