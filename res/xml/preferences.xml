@@ -6,16 +6,9 @@
             android:defaultValue="Metric"
             android:entries="@array/unitItems"
             android:entryValues="@array/unitValues"
-            android:key="distUnitPref"
+            android:key="unitPref"
             android:summary="@string/pref_unit_description"
-            android:title="@string/pref_distance" />
-        <ListPreference
-            android:defaultValue="Metric"
-            android:entries="@array/unitItems"
-            android:entryValues="@array/unitValues"
-            android:key="altUnitPref"
-            android:summary="@string/pref_unit_description"
-            android:title="@string/pref_altitude" />
+            android:title="@string/pref_units" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/prefcat_misc" >
         <CheckBoxPreference

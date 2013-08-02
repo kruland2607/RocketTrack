@@ -36,17 +36,14 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	private final static String TAG = "RocketTrackBaseFragment";
 
 	// Preferences names and default values
-	private static final String PREFS_KEY_UNIT_DISTANCE = "distUnitPref";
-	private static final String PREFS_KEY_UNIT_ALTITUDE = "altUnitPref";
+	private static final String PREFS_KEY_UNIT_DISTANCE = "unitPref";
 	private static final String PREFS_KEY_KEEP_SCREEN_ON = "keepScreenOn";
 
 	// Some default values
-	private static final String PREFS_DEFAULT_UNIT_DISTANCE = Unit.meter.toString();
-	private static final String PREFS_DEFAULT_UNIT_ALTITUDE = Unit.meter.toString();
+	private static final String PREFS_DEFAULT_UNIT = Unit.meter.toString();
 	private static final boolean PREFS_DEFAULT_KEEP_SCREEN_ON = false;
 
 	protected Unit unitDistance = Unit.meter;
-	protected Unit unitAltitude = Unit.meter;
 	
 	private TextView distanceView;
 	private TextView altView;
@@ -327,11 +324,8 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		// Load preferences
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-		final String strUnitDistance = sharedPreferences.getString(PREFS_KEY_UNIT_DISTANCE, PREFS_DEFAULT_UNIT_DISTANCE);
-		unitDistance = Unit.getUnitForString(strUnitDistance);
-
-		final String strUnitAltitude = sharedPreferences.getString(PREFS_KEY_UNIT_ALTITUDE, PREFS_DEFAULT_UNIT_ALTITUDE);
-		unitAltitude = Unit.getUnitForString(strUnitAltitude);
+		final String strUnit = sharedPreferences.getString(PREFS_KEY_UNIT_DISTANCE, PREFS_DEFAULT_UNIT);
+		unitDistance = Unit.getUnitForString(strUnit);
 
 		// Set keep screen on property
 		final boolean blnKeepScreenOn = sharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
@@ -381,11 +375,11 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		{
 			double altitude = rocketLocation.getAltitude();
 
-			String altString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, altitude, "#");
+			String altString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, altitude, "#");
 			altView.setText(altString);
 
 			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
-			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, maxAltitude, "#");
+			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, maxAltitude, "#");
 			maxAltView.setText(maxAltString);
 		}
 		

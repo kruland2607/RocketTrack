@@ -35,7 +35,6 @@
     <string name="pref_keep_screen_on">Keep screen on</string>
     <string name="pref_keep_screen_on_summary">Disables screen saver</string>
     <string name="pref_unit_description">Select metric or US settings</string>
-    <string name="pref_distance">Distance</string>
-    <string name="pref_altitude">Altitude</string>
+    <string name="pref_units">Units</string>
 
 </resources>

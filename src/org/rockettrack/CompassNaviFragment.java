@@ -66,7 +66,7 @@ public class CompassNaviFragment extends RocketTrackBaseFragment {
 		super.onResume();
 
 		this.mCompassNaviView.setUnitForDistance(unitDistance);
-		this.mCompassNaviView.setUnitForAltitude(unitAltitude);
+		this.mCompassNaviView.setUnitForAltitude(unitDistance);
 
 	}
 
