@@ -241,14 +241,6 @@ public class CompassNaviView extends View
 		compassMainPaintOrange.setStyle(Style.STROKE);
 		compassMainPaintOrange.setStrokeWidth(2.0f);
 
-		// Draw target header
-		canvas.drawText("Target", this.mCompassLayout.FirstColumnX, this.mCompassLayout.TargetInformationTargetHeaderY, textHeaderPaint);
-		canvas.drawText("Latitude", width / 2 - 35 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationTargetHeaderY, textHeaderPaint);
-		canvas.drawText("Longitude", width - 100 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationTargetHeaderY, textHeaderPaint);
-
-		canvas.drawText("Distance", this.mCompassLayout.FirstColumnX, this.mCompassLayout.TargetInformationBearingHeaderY, textHeaderPaint);
-		canvas.drawText("Bearing", width - 50 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationBearingHeaderY, textHeaderPaint);
-
 		// Draw compass layout (circles)
 		canvas.drawCircle(this.mCompassLayout.CompassCenterX, this.mCompassLayout.CompassCenterY, this.mCompassLayout.CompassRadius, compassMainPaint);
 		canvas.drawCircle(this.mCompassLayout.CompassCenterX, this.mCompassLayout.CompassCenterY, this.mCompassLayout.CompassRadiusTwoThirds, compassInnerPaint);
@@ -333,7 +325,6 @@ public class CompassNaviView extends View
 		
 		this.drawCompass(canvas);
 		this.drawCompassValues(canvas, DeltaYCompassValues);
-		this.drawTargetInformation(canvas);
 		this.drawGpsInformation(canvas, DeltaYGpsInformation);
 	}
 
@@ -418,9 +409,6 @@ public class CompassNaviView extends View
 			this.mArrowTextPaint.setColor(color);
 			this.drawRotatedTextOnCircle(canvas, this.mCompassLayout.CompassCenterX, this.mCompassLayout.CompassCenterY, this.mCompassLayout.CompassRadius + (int)(5 * this.mDisplayScaledDensity), fltArrowDegrees, strDistance, this.mArrowTextPaint);
 
-			// Write distance and bearing information into Header section
-			canvas.drawText(strDistance, this.mCompassLayout.FirstColumnX, this.mCompassLayout.TargetInformationBearingValueY, this.mTextValuePaint);
-			canvas.drawText(String.format("%.0f¡", fltBearing), this.mDisplayWidthInPixel - 50 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationBearingValueY, this.mTextValuePaint);
 		}
 	}
 
@@ -437,23 +425,6 @@ public class CompassNaviView extends View
 		canvas.drawText(this.getDirectionForDegrees(this.mfltAzimuth), intWidth - 50 * this.mDisplayScaledDensity, intY + intDeltaY + 16 * this.mDisplayScaledDensity, this.mTextValuePaint);
 	}
 	
-	/**
-	 * 
-	 * @param canvas
-	 */
-	private void drawTargetInformation(Canvas canvas)
-	{
-		if ( this.mTarget == null ) {
-			return;
-		}
-		final int intWidth = this.getWidth();		
-		final CoordinateHelper coordinateHelper = new CoordinateHelper(this.mTarget.getLatitude(), this.mTarget.getLongitude());
-
-		canvas.drawText(this.mTarget.getName(), this.mCompassLayout.FirstColumnX, this.mCompassLayout.TargetInformationTargetValueY, this.mTextValuePaint);
-		canvas.drawText(coordinateHelper.getLatitudeString(), intWidth / 2 - 35 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationTargetValueY, this.mTextValuePaint);
-		canvas.drawText(coordinateHelper.getLongitudeString(), intWidth - 100 * this.mDisplayScaledDensity, this.mCompassLayout.TargetInformationTargetValueY, this.mTextValuePaint);
-	}
-
 	/**
 	 * 
 	 * @param canvas

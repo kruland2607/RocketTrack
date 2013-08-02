@@ -12,16 +12,10 @@ public class CompassLayout
 	private float mDisplayScaledDensity;
 	
 	// Position of main blocks
-	private int mTargetInformationY;
 	private int mCompassY;
 	
 	public int FirstColumnX;
 	
-	// Top two rows (target, latitude, longitude, distance, bearing) 
-	public int TargetInformationTargetHeaderY;
-	public int TargetInformationTargetValueY;
-	public int TargetInformationBearingHeaderY;
-	public int TargetInformationBearingValueY;
 
 	// Compass metrics (x,y position, width)
 	public int CompassCenterX;
@@ -45,7 +39,6 @@ public class CompassLayout
 		
 		this.defineMainPositions();
 		
-		this.defineTargetInformationPositions();
 		this.defineCompassMetrics();
 	}
 	
@@ -54,24 +47,11 @@ public class CompassLayout
 	 */
 	private void defineMainPositions()
 	{
-		this.mTargetInformationY = (int)(15 * this.mDisplayScaledDensity);
 		this.mCompassY = (int)(40 * this.mDisplayScaledDensity);
 		
 		this.FirstColumnX = (int)(10 * this.mDisplayScaledDensity);
 	}
 
-	/**
-	 * Define positions of labels on top (Target, Lat, Long, Distance, Bearing)
-	 */
-	private void defineTargetInformationPositions()
-	{
-		// Y Position of Target, Latitude, Longitude
-		this.TargetInformationTargetHeaderY = this.mTargetInformationY;
-		this.TargetInformationTargetValueY = this.mTargetInformationY + (int)(16 * this.mDisplayScaledDensity);
-		this.TargetInformationBearingHeaderY = this.mTargetInformationY + (int)(34 * this.mDisplayScaledDensity);
-		this.TargetInformationBearingValueY = this.mTargetInformationY + (int)(50 * this.mDisplayScaledDensity);		
-	}
-	
 	/**
 	 * 
 	 */
