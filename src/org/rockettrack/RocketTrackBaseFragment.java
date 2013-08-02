@@ -102,9 +102,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			return "";
 		}
 		float distanceMeters = myLocation.distanceTo(rocketLocation);
-		UnitConverter uc = new UnitConverter();
-		long distance = Math.round(uc.convert(Unit.meter, unitDistance, distanceMeters));
-		String distanceString = String.valueOf(distance) + unitDistance.abbreviation;
+		String distanceString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, distanceMeters, "#");
 		return distanceString;
 	}
 	

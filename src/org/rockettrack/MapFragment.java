@@ -264,18 +264,15 @@ public class MapFragment extends RocketTrackBaseFragment {
 
 		//Max Altitude
 		{
-			UnitConverter converter = new UnitConverter();
 			double altitude = rocketLocation.getAltitude();
 
 			TextView alt = (TextView) getView().findViewById(R.id.Altitude);
-			altitude = converter.convert(Unit.meter, unitAltitude, altitude);
-			String altString = String.valueOf(Math.round(altitude)) + unitAltitude.abbreviation;
+			String altString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, altitude, "#");
 			alt.setText(altString);
 
 			TextView lblMaxAltitude = (TextView) getView().findViewById(R.id.MaxAlt);
 			double maxAltitude = RocketTrackState.getInstance().getLocationDataAdapter().getMaxAltitude();
-			Double tmpMaxAlt = converter.convert(Unit.meter, unitAltitude, maxAltitude);
-			String maxAltString = String.valueOf(Math.round(tmpMaxAlt)) + unitAltitude.abbreviation;
+			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitAltitude, maxAltitude, "#");
 			lblMaxAltitude.setText(maxAltString);
 		}
 		

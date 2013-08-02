@@ -66,7 +66,6 @@ public class CompassNaviView extends View
 	private NavigationTarget mTarget;
 
 	// Units
-	private UnitConverter mUnitConverter = new UnitConverter();
 	private Unit mUnitDistance = Unit.meter;
 	private Unit mUnitAltitude = Unit.meter;
 
@@ -563,7 +562,7 @@ public class CompassNaviView extends View
 				strDistance = String.format("%.1fm", distanceInMeters);
 			break;
 		case feet:
-			final Float fltDistanceInFeet = this.mUnitConverter.convert(Unit.meter, Unit.feet, distanceInMeters);
+			final Float fltDistanceInFeet = UnitConverter.convert(Unit.meter, Unit.feet, distanceInMeters);
 			strDistance=String.format("%.1fft", fltDistanceInFeet);
 			break;
 		}
@@ -585,7 +584,7 @@ public class CompassNaviView extends View
 			strAltitude = String.format("%4.0fm", altitudeInMeters);
 			break;
 		case feet:
-			Double dblAltitudeInFeet = this.mUnitConverter.convert(Unit.meter, Unit.feet, altitudeInMeters);
+			Double dblAltitudeInFeet = UnitConverter.convert(Unit.meter, Unit.feet, altitudeInMeters);
 			strAltitude=String.format("%5.0fft", dblAltitudeInFeet);
 			break;
 		}

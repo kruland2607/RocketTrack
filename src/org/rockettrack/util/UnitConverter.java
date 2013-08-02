@@ -1,5 +1,6 @@
 package org.rockettrack.util;
 
+import java.text.DecimalFormat;
 import java.util.Hashtable;
 
 /**
@@ -10,12 +11,14 @@ import java.util.Hashtable;
 public class UnitConverter 
 {
 	
+	private static UnitConverter instance = new UnitConverter();
+	
 	private Hashtable<String, Double> mUnitConversionFactors;
 
 	/**
 	 * 
 	 */
-	public UnitConverter()
+	private UnitConverter()
 	{
 		this.InitializeFactors();
 	}
@@ -75,12 +78,24 @@ public class UnitConverter
 	 * @param value
 	 * @return
 	 */
-	public Double convert(Unit source, Unit target, Double value)
+	public static double convert(Unit source, Unit target, double value)
 	{	
-		final Double dblFactor = this.getConversionFactor(source, target);
+		final double dblFactor = instance.getConversionFactor(source, target);
 		return (value * dblFactor);
 	}
-
+	
+	public static String convertWithUnit(Unit source, Unit target, double value ) {
+		double convertedValue = convert(source,target,value);
+		String valueString = String.valueOf(convertedValue) + target.abbreviation;
+		return valueString;
+	}
+	
+	public static String convertWithUnit(Unit source, Unit target, double value, String formatPattern ) {
+		double convertedValue = convert(source,target,value);
+		DecimalFormat formatter = new DecimalFormat(formatPattern);
+		String valueString = formatter.format(convertedValue) + target.abbreviation;
+		return valueString;
+	}
 	/**
 	 * 
 	 * @param source
@@ -88,21 +103,10 @@ public class UnitConverter
 	 * @param value
 	 * @return
 	 */
-	public Float convert(Unit source, Unit target, Float value)
+	public static float convert(Unit source, Unit target, float value)
 	{	
-		final Float fltFactor = this.getConversionFactor(source, target).floatValue();
+		final float fltFactor = instance.getConversionFactor(source, target).floatValue();
 		return (value * fltFactor);
-	}
-
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) 
-	{
-		UnitConverter uc = new UnitConverter();
-		System.out.println(uc.convert(Unit.meter, Unit.feet, 7.0));
-		System.out.println(uc.convert(Unit.feet, Unit.meter, 7.0));
 	}
 
 }
