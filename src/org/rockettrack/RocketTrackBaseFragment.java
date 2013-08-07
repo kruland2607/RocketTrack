@@ -10,6 +10,10 @@ import org.rockettrack.views.CoordinateHelper;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.DataSetObserver;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -21,6 +25,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.Surface;
@@ -47,13 +52,18 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 	protected Unit unitDistance = Unit.meter;
 	protected boolean useAgl = true;
-	
+
 	private TextView distanceView;
 	private TextView altView;
 	private TextView maxAltView;
 	private TextView bearingView;
 	private TextView latView;
 	private TextView lonView;
+
+	private TextView gpsStatus;
+
+	TransitionDrawable drawable;
+	final Handler handler = new Handler();
 
 	protected abstract void onRocketLocationChange();
 	protected abstract void onCompassChange();
@@ -71,16 +81,16 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 	// magnatometer vector
 	private float[] magnet = new float[3];
-	
+
 	// accelerometer vector
 	private float[] accel = new float[3];
 
 	// orientation angles from accel and magnet
 	private float[] accMagOrientation = new float[3];
-	
+
 	// accelerometer and magnetometer based rotation matrix
 	private float[] rotationMatrix = new float[9];
-	
+
 	// Filters for sensor values
 	private ExponentialAverage accelAverage = new ExponentialAverage(3,.4f);
 	private ExponentialAverage magnetAverage = new ExponentialAverage(3,.25f);
@@ -106,7 +116,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 	protected List<Location> getRocketLocationHistory() {
 		return RocketTrackState.getInstance().getLocationDataAdapter().getLocationHistory();
 	}
-	
+
 	protected String getDistanceTo() {
 		if ( myLocation == null || rocketLocation == null ) {
 			return "";
@@ -115,7 +125,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		String distanceString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, distanceMeters, "#");
 		return distanceString;
 	}
-	
+
 	protected float getAzimuth() {
 		if ( accMagOrientation == null ) {
 			return 0f;
@@ -156,8 +166,19 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		bearingView = (TextView) getView().findViewById(R.id.Bearing);
 		latView = (TextView) getView().findViewById(R.id.Latitude);
 		lonView = (TextView) getView().findViewById(R.id.Longitude);
+		gpsStatus = (TextView) getView().findViewById(R.id.GpsStatus);
+
+		Drawable[] colors = new Drawable[] {
+				new ColorDrawable(Color.GREEN),
+				new ColorDrawable(Color.RED)
+		};
+		drawable = new TransitionDrawable(colors);
+		drawable.setCrossFadeEnabled(true);
+		gpsStatus.setBackgroundDrawable(drawable);
+		drawable.startTransition(0);
+		//gpsStatus.setBackgroundColor(Color.RED);
 	}
-	
+
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -236,19 +257,19 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 
 		if ( event.timestamp > lastCompassTs + 250000000 /* .25s in nanoseconds */) {
 			lastCompassTs = event.timestamp;
-			
+
 			float[] unmappedRotationMatrix = new float[9];
 
 			SensorManager.getRotationMatrix(unmappedRotationMatrix, null, accel, magnet);
-			
+
 			WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
 			int currentOrientation = wm.getDefaultDisplay().getRotation();
 			//Log.d(TAG,"current orientation " + currentOrientation);
-			
+
 			switch ( currentOrientation ) {
 			case Surface.ROTATION_0:
 				SensorManager.remapCoordinateSystem(unmappedRotationMatrix,SensorManager.AXIS_X,SensorManager.AXIS_Y,rotationMatrix);
-				 break;
+				break;
 			case Surface.ROTATION_90:
 				SensorManager.remapCoordinateSystem(unmappedRotationMatrix,SensorManager.AXIS_Y,SensorManager.AXIS_X,rotationMatrix);
 				break;
@@ -333,7 +354,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		// Set keep screen on property
 		final boolean blnKeepScreenOn = sharedPreferences.getBoolean(PREFS_KEY_KEEP_SCREEN_ON, PREFS_DEFAULT_KEEP_SCREEN_ON);
 		this.getView().setKeepScreenOn(blnKeepScreenOn);
-		
+
 		// Load the agl pref
 		useAgl = sharedPreferences.getBoolean(PREFS_KEY_AGL, PREFS_DEFAULT_AGL);
 
@@ -345,7 +366,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			distanceView.setText("");
 			return;
 		}
-		
+
 		Integer rocketBearing = getBearing();
 		if ( rocketBearing != null ) {
 			bearingView.setText(String.valueOf(rocketBearing));
@@ -357,8 +378,10 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 		distanceView.setText(rocketDistance );
 
 	}
-	
+
 	private void updateRocketLocation() {
+		drawable.resetTransition();
+		drawable.startTransition(1500);
 		rocketLocation = RocketTrackState.getInstance().getLocationDataAdapter().getRocketPosition();
 		updateBearingAndDistance();
 
@@ -369,7 +392,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			maxAltView.setText("");
 			return;
 		}
-		
+
 		// Lat & Lon
 		{
 			final CoordinateHelper coordinateHelper = new CoordinateHelper(rocketLocation.getLatitude(), rocketLocation.getLongitude());
@@ -393,7 +416,7 @@ implements SensorEventListener, LocationListener, GpsStatus.Listener {
 			String maxAltString = UnitConverter.convertWithUnit(Unit.meter, unitDistance, maxAltitude, "#");
 			maxAltView.setText(maxAltString);
 		}
-		
+
 		RocketTrackBaseFragment.this.onRocketLocationChange();
 
 
