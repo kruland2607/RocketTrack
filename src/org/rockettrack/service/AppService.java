@@ -270,12 +270,19 @@ public class AppService extends Service {
 		setState(STATE_CONNECTED);
 
 		// Send setup commands: 
+		String cmd;
 		// this should increase the run time of the tx.
-		mAltosBluetooth.print("$PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n");
+		cmd = "$PMTK314,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";
+		RocketTrackState.getInstance().getRawDataAdapter().addRawData( cmd );
+		mAltosBluetooth.print( cmd );
 		// This one sets the dgps mode to sbas:
-		mAltosBluetooth.print("$PMTK301,2*2E\r\n");
+		cmd = "$PMTK301,2*2E\r\n";
+		RocketTrackState.getInstance().getRawDataAdapter().addRawData( cmd );
+		mAltosBluetooth.print( cmd );
 		// And this one enables sbas:
-		mAltosBluetooth.print("$PMTK313,1*2E\r\n");
+		cmd = "$PMTK313,1*2E\r\n";
+		RocketTrackState.getInstance().getRawDataAdapter().addRawData( cmd );
+		mAltosBluetooth.print( cmd );
 	}
 
 	private void connectFailed() {
